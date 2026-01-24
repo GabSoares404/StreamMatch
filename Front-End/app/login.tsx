@@ -69,7 +69,6 @@ export default function LoginScreen() {
                     placeholder="Enter your password"
                     value={password}
                     onChangeText={setPassword}
-                    secureTextEntry
                 />
             </View>
 

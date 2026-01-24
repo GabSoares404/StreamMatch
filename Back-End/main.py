@@ -5,17 +5,37 @@ from supabase import create_client, Client
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv()
+from pathlib import Path
+env_path = Path('.') / '.env'
+load_dotenv(dotenv_path=env_path)
 
 url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_KEY")
 
 if not url or not key:
-    raise ValueError("Missing SUPABASE_URL or SUPABASE_KEY in .env file")
+    print(f"Warning: Could not find environment variables in {env_path.absolute()}")
+    # Attempt to load from parent if running from root
+    env_path = Path('..') / 'Back-End' / '.env'
+    load_dotenv(dotenv_path=env_path)
+    url = os.environ.get("SUPABASE_URL")
+    key = os.environ.get("SUPABASE_KEY")
+    
+if not url or not key:
+    raise ValueError(f"Missing SUPABASE_URL or SUPABASE_KEY. Checked {env_path.absolute()}")
 
 supabase: Client = create_client(url, key)
 
 app = FastAPI()
+
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class UserCredentials(BaseModel):
     user: str
@@ -24,16 +44,20 @@ class UserCredentials(BaseModel):
 @app.post("/login")
 async def login(credentials: UserCredentials):
     try:
-        # Attempt to sign in with password
-        response = supabase.auth.sign_in_with_password({
-            "user": credentials.user,
-            "password": credentials.password
-        })
+        # Query the 'Users' table directly
+        response = supabase.table("Users").select("*").eq("user", credentials.user).eq("password", credentials.password).execute()
+        
+        print(response)
+        # Check if user exists
+        if not response.data:
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+            
+        user_data = response.data[0]
         
         # If successful, return user info
         return {
             "message": "Login successful",
-            "user": response.user,
+            "user": user_data,
         }
     except Exception as e:
         # Supabase raises an exception on failure
