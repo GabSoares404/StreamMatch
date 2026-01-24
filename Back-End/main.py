@@ -11,7 +11,7 @@ load_dotenv(dotenv_path=env_path)
 
 url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_KEY")
-
+role_key: str = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 if not url or not key:
     print(f"Warning: Could not find environment variables in {env_path.absolute()}")
     # Attempt to load from parent if running from root
@@ -19,11 +19,18 @@ if not url or not key:
     load_dotenv(dotenv_path=env_path)
     url = os.environ.get("SUPABASE_URL")
     key = os.environ.get("SUPABASE_KEY")
+    role_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
     
 if not url or not key:
     raise ValueError(f"Missing SUPABASE_URL or SUPABASE_KEY. Checked {env_path.absolute()}")
 
-supabase: Client = create_client(url, key)
+if not role_key:
+    print("Warning: SUPABASE_SERVICE_ROLE_KEY not found. Operations requiring admin privileges might fail.")
+
+# Use the service role key for the client to allow backend admin access (bypassing RLS)
+# If you prefer to keep the 'anon' client separate, you can create two clients.
+# For this backend logic (checking users table manually), service role is often preferred.
+supabase: Client = create_client(url, role_key if role_key else key)
 
 app = FastAPI()
 
@@ -47,7 +54,6 @@ async def login(credentials: UserCredentials):
         # Query the 'Users' table directly
         response = supabase.table("Users").select("*").eq("user", credentials.user).eq("password", credentials.password).execute()
         
-        print(response)
         # Check if user exists
         if not response.data:
             raise HTTPException(status_code=401, detail="Invalid credentials")
