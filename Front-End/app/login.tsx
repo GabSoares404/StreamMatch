@@ -16,8 +16,8 @@ export default function LoginScreen() {
 
         setLoading(true);
         try {
-            // Use 10.0.2.2 for Android Emulator, localhost or IP for iOS/Web
-            const API_URL = 'http://10.0.2.2:8000';
+            // Use environment variable or fallback
+            const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
             const response = await fetch(`${API_URL}/login`, {
                 method: 'POST',
