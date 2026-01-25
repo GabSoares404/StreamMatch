@@ -82,7 +82,7 @@ export default function LoginScreen() {
 
             <TouchableOpacity
                 style={styles.signUpButton}
-                onPress={() => Alert.alert('Cadastro', 'Funcionalidade de cadastro em breve!')}
+                onPress={() => router.push('/register')}
             >
                 <Text style={styles.signUpText}>
                     Não tem login? <Text style={styles.signUpLink}>Cadastre-se</Text>.

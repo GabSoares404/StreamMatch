@@ -48,6 +48,26 @@ class UserCredentials(BaseModel):
     user: str
     password: str
 
+@app.post("/register")
+async def register(credentials: UserCredentials):
+    try:
+        # Check if user already exists
+        existing_user = supabase.table("Users").select("*").eq("user", credentials.user).execute()
+        if existing_user.data:
+            raise HTTPException(status_code=400, detail="Usuário já existe")
+
+        # Insert new user
+        response = supabase.table("Users").insert({
+            "user": credentials.user,
+            "password": credentials.password
+        }).execute()
+        
+        return {"message": "Usuário criado com sucesso!"}
+
+    except Exception as e:
+        print(f"Error creating user: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
 @app.post("/login")
 async def login(credentials: UserCredentials):
     try:
