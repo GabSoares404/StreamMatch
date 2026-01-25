@@ -10,7 +10,7 @@ export default function LoginScreen() {
 
     const handleLogin = async () => {
         if (!username || !password) {
-            Alert.alert('Error', 'Please enter both username and password.');
+            Alert.alert('Erro', 'Insira usuário e senha.');
             return;
         }
 
@@ -33,15 +33,15 @@ export default function LoginScreen() {
             const data = await response.json();
 
             if (response.ok) {
-                Alert.alert('Login Success', `Welcome, ${data.user?.email || username}!`);
+                Alert.alert('Sucesso!', `Bem-vindo, ${data.user?.email || username}!`);
                 // Navigate to main app
                 // router.replace('/(tabs)');
             } else {
-                Alert.alert('Login Failed', data.detail || 'Invalid credentials');
+                Alert.alert('Erro', data.detail || 'Credenciais inválidas');
             }
         } catch (error) {
             console.error(error);
-            Alert.alert('Error', 'Failed to connect to server. Check your internet connection or server URL.');
+            Alert.alert('Erro', 'Falha ao conectar ao servidor. Verifique sua conexão com a internet ou a URL do servidor.');
         } finally {
             setLoading(false);
         }
@@ -49,13 +49,13 @@ export default function LoginScreen() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Welcome Back</Text>
+            <Text style={styles.title}>Bem-vindo de volta</Text>
 
             <View style={styles.inputContainer}>
-                <Text style={styles.label}>Username</Text>
+                <Text style={styles.label}>Usuário</Text>
                 <TextInput
                     style={styles.input}
-                    placeholder="Enter your username"
+                    placeholder="Digite seu usuário"
                     value={username}
                     onChangeText={setUsername}
                     autoCapitalize="none"
@@ -63,10 +63,10 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.inputContainer}>
-                <Text style={styles.label}>Password</Text>
+                <Text style={styles.label}>Senha</Text>
                 <TextInput
                     style={styles.input}
-                    placeholder="Enter your password"
+                    placeholder="Digite sua senha"
                     value={password}
                     onChangeText={setPassword}
                 />
@@ -77,7 +77,16 @@ export default function LoginScreen() {
                 onPress={handleLogin}
                 disabled={loading}
             >
-                <Text style={styles.buttonText}>{loading ? 'Logging in...' : 'Login'}</Text>
+                <Text style={styles.buttonText}>{loading ? 'Carregando...' : 'Login'}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+                style={styles.signUpButton}
+                onPress={() => Alert.alert('Cadastro', 'Funcionalidade de cadastro em breve!')}
+            >
+                <Text style={styles.signUpText}>
+                    Não tem login? <Text style={styles.signUpLink}>Cadastre-se</Text>.
+                </Text>
             </TouchableOpacity>
         </View>
     );
@@ -128,5 +137,18 @@ const styles = StyleSheet.create({
     },
     buttonDisabled: {
         backgroundColor: '#a0c4ff',
+    },
+    signUpButton: {
+        marginTop: 20,
+        alignItems: 'center',
+    },
+    signUpText: {
+        fontSize: 14,
+        color: '#333',
+    },
+    signUpLink: {
+        fontWeight: 'bold',
+        color: '#007AFF', // Same primary color
+        textDecorationLine: 'underline',
     },
 });

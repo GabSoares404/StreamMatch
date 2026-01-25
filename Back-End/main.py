@@ -56,13 +56,13 @@ async def login(credentials: UserCredentials):
         
         # Check if user exists
         if not response.data:
-            raise HTTPException(status_code=401, detail="Invalid credentials")
+            raise HTTPException(status_code=401, detail="Credenciais inválidas")
             
         user_data = response.data[0]
         
         # If successful, return user info
         return {
-            "message": "Login successful",
+            "message": "Login bem-sucedido",
             "user": user_data,
         }
     except Exception as e:
