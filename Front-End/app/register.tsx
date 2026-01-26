@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons'; // Assuming Ionicons is available, typical in Expo
+import { Ionicons } from '@expo/vector-icons';
+import { useColorScheme } from '../hooks/use-color-scheme';
+import { Colors } from '../constants/theme';
 
 export default function RegisterScreen() {
     const router = useRouter();
+    const theme = useColorScheme() ?? 'light';
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -60,19 +63,20 @@ export default function RegisterScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
             <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
                 <Text style={styles.backButtonText}>← Voltar</Text>
             </TouchableOpacity>
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
-                <Text style={styles.title}>Crie sua conta</Text>
+                <Text style={[styles.title, { color: Colors[theme].text }]}>Crie sua conta</Text>
 
                 <View style={styles.inputContainer}>
-                    <Text style={styles.label}>Usuário</Text>
+                    <Text style={[styles.label, { color: Colors[theme].text }]}>Usuário</Text>
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, { color: Colors[theme].text, borderColor: Colors[theme].icon, backgroundColor: theme === 'dark' ? '#333' : '#f9f9f9' }]}
                         placeholder="Escolha um nome de usuário"
+                        placeholderTextColor={Colors[theme].icon}
                         value={username}
                         onChangeText={setUsername}
                         autoCapitalize="none"
@@ -80,10 +84,11 @@ export default function RegisterScreen() {
                 </View>
 
                 <View style={styles.inputContainer}>
-                    <Text style={styles.label}>Senha</Text>
+                    <Text style={[styles.label, { color: Colors[theme].text }]}>Senha</Text>
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, { color: Colors[theme].text, borderColor: Colors[theme].icon, backgroundColor: theme === 'dark' ? '#333' : '#f9f9f9' }]}
                         placeholder="Escolha uma senha"
+                        placeholderTextColor={Colors[theme].icon}
                         value={password}
                         onChangeText={setPassword}
                         secureTextEntry
@@ -91,10 +96,11 @@ export default function RegisterScreen() {
                 </View>
 
                 <View style={styles.inputContainer}>
-                    <Text style={styles.label}>Confirmar Senha</Text>
+                    <Text style={[styles.label, { color: Colors[theme].text }]}>Confirmar Senha</Text>
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, { color: Colors[theme].text, borderColor: Colors[theme].icon, backgroundColor: theme === 'dark' ? '#333' : '#f9f9f9' }]}
                         placeholder="Repita a senha"
+                        placeholderTextColor={Colors[theme].icon}
                         value={confirmPassword}
                         onChangeText={setConfirmPassword}
                         secureTextEntry

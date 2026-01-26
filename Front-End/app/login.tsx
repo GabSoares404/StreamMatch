@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useColorScheme } from '../hooks/use-color-scheme';
+import { Colors } from '../constants/theme';
 
 export default function LoginScreen() {
     const router = useRouter();
+    const theme = useColorScheme() ?? 'light';
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -48,15 +51,16 @@ export default function LoginScreen() {
     };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.logo}>StreamMatch</Text>
-            <Text style={styles.title}>Bem-vindo de volta</Text>
+        <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
+            <Text style={[styles.logo, { color: Colors[theme].text }]}>StreamMatch</Text>
+            <Text style={[styles.title, { color: Colors[theme].text }]}>Bem-vindo de volta</Text>
 
             <View style={styles.inputContainer}>
-                <Text style={styles.label}>Usuário</Text>
+                <Text style={[styles.label, { color: Colors[theme].text }]}>Usuário</Text>
                 <TextInput
-                    style={styles.input}
+                    style={[styles.input, { color: Colors[theme].text, borderColor: Colors[theme].icon, backgroundColor: theme === 'dark' ? '#333' : '#f9f9f9' }]}
                     placeholder="Digite seu usuário"
+                    placeholderTextColor={Colors[theme].icon}
                     value={username}
                     onChangeText={setUsername}
                     autoCapitalize="none"
@@ -64,12 +68,14 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.inputContainer}>
-                <Text style={styles.label}>Senha</Text>
+                <Text style={[styles.label, { color: Colors[theme].text }]}>Senha</Text>
                 <TextInput
-                    style={styles.input}
+                    style={[styles.input, { color: Colors[theme].text, borderColor: Colors[theme].icon, backgroundColor: theme === 'dark' ? '#333' : '#f9f9f9' }]}
                     placeholder="Digite sua senha"
+                    placeholderTextColor={Colors[theme].icon}
                     value={password}
                     onChangeText={setPassword}
+                    secureTextEntry
                 />
             </View>
 
@@ -85,7 +91,7 @@ export default function LoginScreen() {
                 style={styles.signUpButton}
                 onPress={() => router.push('/register')}
             >
-                <Text style={styles.signUpText}>
+                <Text style={[styles.signUpText, { color: Colors[theme].text }]}>
                     Não tem login? <Text style={styles.signUpLink}>Cadastre-se</Text>.
                 </Text>
             </TouchableOpacity>
@@ -98,12 +104,10 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         padding: 20,
-        backgroundColor: '#fff',
     },
     logo: {
         fontSize: 34,
         fontFamily: 'GravitasOne_400Regular',
-        color: '#000',
         textAlign: 'center',
         marginBottom: 80,
     },
@@ -112,7 +116,6 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 40,
         textAlign: 'center',
-        color: '#333',
     },
     inputContainer: {
         marginBottom: 20,
@@ -120,16 +123,13 @@ const styles = StyleSheet.create({
     label: {
         marginBottom: 8,
         fontSize: 16,
-        color: '#333',
         fontWeight: '500',
     },
     input: {
         borderWidth: 1,
-        borderColor: '#ddd',
         padding: 15,
         borderRadius: 8,
         fontSize: 16,
-        backgroundColor: '#f9f9f9',
     },
     button: {
         backgroundColor: '#007AFF', // Example primary color
@@ -152,7 +152,6 @@ const styles = StyleSheet.create({
     },
     signUpText: {
         fontSize: 14,
-        color: '#333',
     },
     signUpLink: {
         fontWeight: 'bold',
