@@ -12,6 +12,12 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  return (
+    <InnerLayout />
+  );
+}
+
+function InnerLayout() {
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     GravitasOne_400Regular,
@@ -33,6 +39,8 @@ export default function RootLayout() {
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="register" options={{ headerShown: false }} />
+        <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
+        <Stack.Screen name="movie/[id]" options={{ title: 'Details', presentation: 'card' }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
       <StatusBar style="auto" />
