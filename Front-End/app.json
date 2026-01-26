@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Front-End",
-    "slug": "Front-End",
+    "name": "StreamMatch",
+    "slug": "StreamMatch",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "frontend",
+    "scheme": "streammatch",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
