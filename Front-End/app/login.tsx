@@ -49,6 +49,7 @@ export default function LoginScreen() {
 
     return (
         <View style={styles.container}>
+            <Text style={styles.logo}>StreamMatch</Text>
             <Text style={styles.title}>Bem-vindo de volta</Text>
 
             <View style={styles.inputContainer}>
@@ -98,6 +99,13 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         padding: 20,
         backgroundColor: '#fff',
+    },
+    logo: {
+        fontSize: 34,
+        fontFamily: 'GravitasOne_400Regular',
+        color: '#000',
+        textAlign: 'center',
+        marginBottom: 80,
     },
     title: {
         fontSize: 28,
