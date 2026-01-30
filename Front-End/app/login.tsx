@@ -3,10 +3,12 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'reac
 import { useRouter } from 'expo-router';
 import { useColorScheme } from '../hooks/use-color-scheme';
 import { Colors } from '../constants/theme';
+import { useAuthStore } from '../store/useAuthStore';
 
 export default function LoginScreen() {
     const router = useRouter();
     const theme = useColorScheme() ?? 'light';
+    const login = useAuthStore((state) => state.login);
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -20,7 +22,8 @@ export default function LoginScreen() {
         setLoading(true);
         try {
             // Use environment variable or fallback
-            const API_URL = process.env.EXPO_PUBLIC_API_URL;
+            const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.4:8000';
+            console.log('Attempting login to:', API_URL);
 
             const response = await fetch(`${API_URL}/login`, {
                 method: 'POST',
@@ -36,15 +39,18 @@ export default function LoginScreen() {
             const data = await response.json();
 
             if (response.ok) {
+                // Save user to store
+                login(data.user);
+
                 Alert.alert('Sucesso!', `Bem-vindo, ${data.user?.email || username}!`);
                 // Navigate to main app
-                // router.replace('/(tabs)');
+                router.replace('/(drawer)/home');
             } else {
                 Alert.alert('Erro', data.detail || 'Credenciais inválidas');
             }
         } catch (error) {
-            console.error(error);
-            Alert.alert('Erro', 'Falha ao conectar ao servidor. Verifique sua conexão com a internet ou a URL do servidor.');
+            console.error('Login Error:', error);
+            Alert.alert('Erro', `Falha ao conectar: ${error instanceof Error ? error.message : String(error)}`);
         } finally {
             setLoading(false);
         }

@@ -9,20 +9,27 @@ from pathlib import Path
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 
-url: str = os.environ.get("SUPABASE_URL")
-key: str = os.environ.get("SUPABASE_KEY")
-role_key: str = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
-if not url or not key:
-    print(f"Warning: Could not find environment variables in {env_path.absolute()}")
-    # Attempt to load from parent if running from root
-    env_path = Path('..') / 'Back-End' / '.env'
-    load_dotenv(dotenv_path=env_path)
-    url = os.environ.get("SUPABASE_URL")
-    key = os.environ.get("SUPABASE_KEY")
-    role_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
-    
-if not url or not key:
-    raise ValueError(f"Missing SUPABASE_URL or SUPABASE_KEY. Checked {env_path.absolute()}")
+try:
+    url: str = os.environ.get("SUPABASE_URL")
+    key: str = os.environ.get("SUPABASE_KEY")
+    role_key: str = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+    if not url or not key:
+        print(f"Warning: Could not find environment variables in {env_path.absolute()}")
+        # Attempt to load from parent if running from root
+        env_path = Path('..') / 'Back-End' / '.env'
+        load_dotenv(dotenv_path=env_path)
+        url = os.environ.get("SUPABASE_URL")
+        key = os.environ.get("SUPABASE_KEY")
+        role_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+        
+    if not url or not key:
+        raise ValueError(f"Missing SUPABASE_URL or SUPABASE_KEY. Checked {env_path.absolute()}")
+except Exception as e:
+    import traceback
+    traceback.print_exc()
+    print(f"CRITICAL ERROR LOADING ENV: {e}")
+    # We re-raise so it still fails, but now we should see it
+    raise e
 
 if not role_key:
     print("Warning: SUPABASE_SERVICE_ROLE_KEY not found. Operations requiring admin privileges might fail.")

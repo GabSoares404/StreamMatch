@@ -53,25 +53,88 @@ export interface MergedMovie extends TrendingMovie {
     rating: number; // The logic: rating with most votes
 }
 
-export const fetchTrendingMovies = async (): Promise<TrendingMovie[]> => {
+export interface UnifiedMedia {
+    id: number;
+    title: string;
+    poster: string;
+    fanart: string;
+    year?: string;
+    rating?: number;
+    type: 'movie' | 'anime' | 'tv';
+}
+
+export const fetchTrendingMovies = async (): Promise<UnifiedMedia[]> => {
     try {
         const response = await fetch(`${API_BASE}/movies/trending/month?client_id=${CLIENT_ID}`);
-        if (!response.ok) {
-            throw new Error(`Failed to fetch trending movies: ${response.statusText}`);
-        }
+        if (!response.ok) throw new Error(`Failed to fetch trending movies: ${response.statusText}`);
         const data = await response.json();
-        return data; // Request returns an array of movies
+        return data.slice(0, 20).map((item: any) => ({
+            id: item.ids.simkl || item.ids.simkl_id || Math.floor(Math.random() * 1000000),
+            title: item.title,
+            poster: item.poster,
+            fanart: item.fanart,
+            year: item.year,
+            rating: item.ratings?.simkl?.rating || item.ratings?.imdb?.rating,
+            type: 'movie'
+        }));
     } catch (error) {
-        console.error("Fetch Trending Error:", error);
+        console.error("Fetch Trending Movies Error:", error);
         return [];
     }
+};
+
+export const fetchTrendingAnime = async (): Promise<UnifiedMedia[]> => {
+    try {
+        const response = await fetch(`${API_BASE}/anime/trending/month?client_id=${CLIENT_ID}`);
+        if (!response.ok) throw new Error(`Failed to fetch trending anime: ${response.statusText}`);
+        const data = await response.json();
+        return data.slice(0, 20).map((item: any) => ({
+            id: item.ids.simkl || item.ids.simkl_id || Math.floor(Math.random() * 1000000),
+            title: item.title,
+            poster: item.poster,
+            fanart: item.fanart,
+            year: item.year,
+            rating: item.ratings?.simkl?.rating || item.ratings?.mal?.rating,
+            type: 'anime'
+        }));
+    } catch (error) {
+        console.error("Fetch Trending Anime Error:", error);
+        return [];
+    }
+};
+
+export const fetchTrendingTV = async (): Promise<UnifiedMedia[]> => {
+    try {
+        const response = await fetch(`${API_BASE}/tv/trending/month?client_id=${CLIENT_ID}`);
+        if (!response.ok) throw new Error(`Failed to fetch trending tv: ${response.statusText}`);
+        const data = await response.json();
+        return data.slice(0, 20).map((item: any) => ({
+            id: item.ids.simkl || item.ids.simkl_id || Math.floor(Math.random() * 1000000),
+            title: item.title,
+            poster: item.poster,
+            fanart: item.fanart,
+            year: item.year,
+            rating: item.ratings?.simkl?.rating || item.ratings?.imdb?.rating,
+            type: 'tv'
+        }));
+    } catch (error) {
+        console.error("Fetch Trending TV Error:", error);
+        return [];
+    }
+};
+
+export const fetchTrendingSeries = async (): Promise<UnifiedMedia[]> => {
+    // Simkl uses 'tv' for series basically. We can filter or just use the same endpoint.
+    // For specific "Series" vs "TV" distinction, Simkl separates by type maybe?
+    // For now, mapping 'Series' tab to standard TV trending, same as TV tab implies.
+    // User might want distinct content, but mostly they are synonyms in API context.
+    return fetchTrendingTV();
 };
 
 export const fetchMovieDetails = async (simklId: number): Promise<MovieDetail | null> => {
     try {
         const response = await fetch(`${API_BASE}/movies/${simklId}?client_id=${CLIENT_ID}`);
         if (!response.ok) {
-            // Some movies might not have details or id might be wrong, handle gracefully
             console.warn(`Failed to fetch details for ${simklId}: ${response.statusText}`);
             return null;
         }
@@ -83,46 +146,115 @@ export const fetchMovieDetails = async (simklId: number): Promise<MovieDetail | 
     }
 };
 
-export const getMoviesWithDetails = async (): Promise<MergedMovie[]> => {
-    const trending = await fetchTrendingMovies();
-    if (!trending || trending.length === 0) return [];
+export interface MediaDetail extends UnifiedMedia {
+    overview?: string;
+    runtime?: string;
+    country?: string;
+    status?: string;
+    genres?: string[];
+    ratings?: SimklRatings;
+    year?: string;
+    tmdbRating?: number;
+    providers?: WatchProvider[];
+}
 
-    // Limit to first 20 for performance during dev, or fetch all?
-    // User didn't specify limit, but fetching 50+ details individually might be slow.
-    // I'll do specific batch sizes or just map all. 
-    // Optimization: Promise.all
+export interface WatchProvider {
+    provider_id: number;
+    provider_name: string;
+    logo_path: string;
+}
 
-    // Let's take the first 10 for now to ensure speed, or all if user wants list.
-    // I'll fetch for the first 15 items to start.
-    const subset = trending.slice(0, 15);
+const TMDB_API_KEY = process.env.EXPO_PUBLIC_TMDB_API_KEY;
+const TMDB_BASE = 'https://api.themoviedb.org/3';
 
-    const mergedPromises = subset.map(async (movie) => {
-        const simklId = movie.ids.simkl || movie.ids.simkl_id;
+export const fetchTMDBDetails = async (tmdbId: number, type: 'movie' | 'tv') => {
+    if (!TMDB_API_KEY) return null;
+    try {
+        const response = await fetch(`${TMDB_BASE}/${type}/${tmdbId}?api_key=${TMDB_API_KEY}&language=pt-BR&append_to_response=watch/providers`);
+        if (!response.ok) return null;
+        return await response.json();
+    } catch (error) {
+        console.error("TMDB Fetch Error:", error);
+        return null;
+    }
+};
 
-        // Calculate best rating based on votes
-        const simklVotes = movie.ratings.simkl?.votes || 0;
-        const imdbVotes = movie.ratings.imdb?.votes || 0;
-        const bestRating = simklVotes > imdbVotes
-            ? (movie.ratings.simkl?.rating || 0)
-            : (movie.ratings.imdb?.rating || 0);
+export const fetchGenericDetails = async (id: number, type: 'movie' | 'anime' | 'tv'): Promise<MediaDetail | null> => {
+    try {
+        let endpoint = `${type}s`;
+        if (type === 'anime') endpoint = 'anime';
+        if (type === 'tv') endpoint = 'tv';
 
-        if (!simklId) {
-            return {
-                ...movie,
-                title: 'Unknown Title',
-                rating: bestRating
-            };
+        // 1. Fetch Simkl Data (Generic)
+        const response = await fetch(`${API_BASE}/${endpoint}/${id}?client_id=${CLIENT_ID}&extended=full`);
+        if (!response.ok) {
+            console.warn(`Failed to fetch details for ${type}/${id}: ${response.statusText}`);
+            return null;
+        }
+        const simklData = await response.json();
+
+        // 2. Fetch TMDB Data (Localized) if ID exists
+        let tmdbData = null;
+        if (simklData.ids.tmdb) {
+            // Anime is usually 'tv' in TMDB, but could be 'movie' depending on the item. 
+            // Simkl type 'anime' maps to TMDB 'tv' mostly (exceptions exist for movies).
+            // For safety, we trust the 'type' param unless it's anime, then we guess 'tv' first?
+            // Simkl usually handles mapping. Let's assume 'anime' -> 'tv' for TMDB mostly.
+            const tmdbType = type === 'movie' ? 'movie' : 'tv';
+            tmdbData = await fetchTMDBDetails(simklData.ids.tmdb, tmdbType);
         }
 
-        const details = await fetchMovieDetails(simklId);
-        return {
-            ...movie,
-            title: details?.title || 'Unknown Title',
-            year: details?.year,
-            rating: bestRating
-        };
-    });
+        // 3. Merge Data (Prioritize TMDB for Text/Loc field)
+        const country = tmdbData?.production_countries?.[0]?.iso_3166_1 || simklData.country;
+        const overview = tmdbData?.overview || simklData.overview;
+        // User requested Original Title (Romanized for Anime)
+        let title = tmdbData?.original_title || tmdbData?.original_name || simklData.title;
+        if (type === 'anime') {
+            // For Anime, TMDB original_name is often Kanji. Simkl title is usually Romaji/English.
+            title = simklData.title;
+        }
 
-    const results = await Promise.all(mergedPromises);
-    return results;
+        const poster = tmdbData?.poster_path ? `https://image.tmdb.org/t/p/w500${tmdbData.poster_path}` : simklData.poster;
+        const fanart = tmdbData?.backdrop_path ? `https://image.tmdb.org/t/p/w1280${tmdbData.backdrop_path}` : simklData.fanart;
+
+        // Extract BR Providers (Flatrate only)
+        const providers = tmdbData?.['watch/providers']?.results?.BR?.flatrate?.map((p: any) => ({
+            provider_id: p.provider_id,
+            provider_name: p.provider_name,
+            logo_path: `https://image.tmdb.org/t/p/w200${p.logo_path}`
+        })) || [];
+
+        // Note: Existing app expects 'poster' to be just the hash for Simkl.
+        // We need to return a property that the UI can handle. 
+        // The UI currently does: `https://simkl.in/posters/${media.poster}_m.jpg`
+        // We should PROBABLY keep providing the Simkl poster hash to avoid breaking the UI, 
+        // OR update the UI to handle full URLs.
+        // Let's stick to returning Simkl images for now to avoid breaking the image component 
+        // unless we update the UI component too.
+        // BUT user specifically asked for "Country" and better data. 
+        // Let's UPDATE the Country and text fields first.
+
+        return {
+            id: simklData.ids.simkl,
+            title: title,
+            poster: simklData.poster, // Keep Simkl poster hash for now to ensure compatibility
+            fanart: simklData.fanart, // Keep Simkl fanart hash for now
+            year: simklData.year,
+            rating: simklData.ratings?.simkl?.rating,
+            type: type,
+            overview: overview,
+            runtime: simklData.runtime, // Simkl runtime is often in generic format
+            country: country, // This is now localized from TMDB!
+            status: simklData.status,
+            genres: simklData.genres,
+            ratings: simklData.ratings,
+            tmdbRating: tmdbData?.vote_average,
+            providers: providers
+        };
+    } catch (error) {
+        console.error(`Fetch Generic Details Error (${type}/${id}):`, error);
+        return null;
+    }
 };
+
+

@@ -1,25 +1,21 @@
-import { View, Text, StyleSheet } from 'react-native';
-import { useColorScheme } from '../../hooks/use-color-scheme';
-import { Colors } from '../../constants/theme';
+import React, { useEffect, useState } from 'react';
+import MediaGrid from '../../components/MediaGrid';
+import { fetchTrendingSeries, UnifiedMedia } from '../../services/api';
 
 export default function Series() {
-    const theme = useColorScheme() ?? 'light';
-    return (
-        <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
-            <Text style={[styles.text, { color: Colors[theme].text }]}>Séries (Em Breve)</Text>
-        </View>
-    );
-}
+    const [data, setData] = useState<UnifiedMedia[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#121212',
-    },
-    text: {
-        color: '#fff',
-        fontSize: 20,
-    },
-});
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    const loadData = async () => {
+        setIsLoading(true);
+        const res = await fetchTrendingSeries();
+        setData(res);
+        setIsLoading(false);
+    };
+
+    return <MediaGrid data={data} isLoading={isLoading} title="Séries" />;
+}

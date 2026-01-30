@@ -1,25 +1,22 @@
-import { View, Text, StyleSheet } from 'react-native';
-import { useColorScheme } from '../../hooks/use-color-scheme';
-import { Colors } from '../../constants/theme';
+import React, { useEffect, useState } from 'react';
+import { View } from 'react-native';
+import MediaGrid from '../../components/MediaGrid';
+import { fetchTrendingMovies, UnifiedMedia } from '../../services/api';
 
 export default function Movies() {
-    const theme = useColorScheme() ?? 'light';
-    return (
-        <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
-            <Text style={[styles.text, { color: Colors[theme].text }]}>Filmes (Em Breve)</Text>
-        </View>
-    );
-}
+    const [movies, setMovies] = useState<UnifiedMedia[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#121212',
-    },
-    text: {
-        color: '#fff',
-        fontSize: 20,
-    },
-});
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    const loadData = async () => {
+        setIsLoading(true);
+        const data = await fetchTrendingMovies();
+        setMovies(data);
+        setIsLoading(false);
+    };
+
+    return <MediaGrid data={movies} isLoading={isLoading} title="Filmes" />;
+}

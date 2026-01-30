@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, Dimensions, ScrollView, Image, TouchableOpacity, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { MergedMovie } from '../services/api';
+import { UnifiedMedia } from '../services/api';
 
 interface MovieCardProps {
-    movie: MergedMovie;
+    movie: UnifiedMedia;
     onPress: () => void;
     width: number; // Pass width explicitly for grid support
 }
@@ -90,17 +90,14 @@ export default function MovieCard({ movie, onPress, width }: MovieCardProps) {
                             />
                         ))}
                     </View>
-                </View>
 
-                <View style={styles.infoContainer}>
-                    <Text style={[styles.title, { color: theme === 'dark' ? '#FFF' : '#000' }]} numberOfLines={1}>{movie.title}</Text>
-                    <View style={styles.metaRow}>
-                        <Text style={[styles.date, { color: theme === 'dark' ? '#AAA' : '#666' }]}>{movie.year || movie.release_date?.split('/')[2]}</Text>
-                        <View style={styles.ratingBadge}>
-                            <Text style={styles.ratingText}>{movie.rating?.toFixed(1)}</Text>
-                        </View>
+                    {/* Rating Badge Overlay */}
+                    <View style={styles.ratingBadgeOverlay}>
+                        <Text style={styles.ratingText}>{movie.rating?.toFixed(1)}</Text>
                     </View>
                 </View>
+
+                {/* Info block removed */}
             </TouchableOpacity>
         </View>
     );
@@ -155,33 +152,21 @@ const styles = StyleSheet.create({
         height: 6,
         borderRadius: 3,
     },
-    infoContainer: {
-        padding: 10,
-    },
-    title: {
-        color: '#FFF',
-        fontSize: 16, // Smaller font for grid
-        fontWeight: 'bold',
-        marginBottom: 4,
-    },
-    metaRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    date: {
-        color: '#AAA',
-        fontSize: 12,
-    },
-    ratingBadge: {
-        backgroundColor: '#E50914',
+    // infoContainer & title styles removed
+    ratingBadgeOverlay: {
+        position: 'absolute',
+        top: 8, // Moved to TOP
+        right: 8,
+        backgroundColor: 'rgba(0,0,0,0.7)',
         paddingHorizontal: 6,
         paddingVertical: 2,
         borderRadius: 4,
+        borderWidth: 1,
+        borderColor: '#E50914',
     },
     ratingText: {
         color: '#FFF',
         fontWeight: 'bold',
-        fontSize: 10,
+        fontSize: 12,
     }
 });

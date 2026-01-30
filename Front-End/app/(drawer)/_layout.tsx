@@ -1,7 +1,9 @@
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Drawer } from 'expo-router/drawer';
-import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
+import { DrawerContentScrollView, DrawerItemList, DrawerItem } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuthStore } from '../../store/useAuthStore';
+import { useRouter } from 'expo-router';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import Constants from 'expo-constants';
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -9,8 +11,9 @@ import { useThemeStore } from '../../store/useThemeStore';
 
 function CustomDrawerContent(props: any) {
     const colorScheme = useColorScheme();
+    const router = useRouter();
     return (
-        <DrawerContentScrollView {...props} contentContainerStyle={{ paddingTop: 10 }}>
+        <DrawerContentScrollView {...props} contentContainerStyle={{ paddingTop: 10, flex: 1 }}>
             <View style={{ padding: 10, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colorScheme === 'dark' ? '#333' : '#eee' }}>
                 <Text style={{
                     fontFamily: 'GravitasOne_400Regular',
@@ -21,6 +24,26 @@ function CustomDrawerContent(props: any) {
                 </Text>
             </View>
             <DrawerItemList {...props} />
+            <View style={{ flex: 1 }} />
+            <DrawerItem
+                label="Perfil"
+                labelStyle={{ color: colorScheme === 'dark' ? '#fff' : '#000' }}
+                icon={({ size, color }) => (
+                    <Ionicons name="person-outline" size={size} color={colorScheme === 'dark' ? '#fff' : '#000'} />
+                )}
+                onPress={() => router.push('/(drawer)/profile')}
+            />
+            <DrawerItem
+                label="Sair"
+                labelStyle={{ color: colorScheme === 'dark' ? '#fff' : '#000' }}
+                icon={({ size, color }) => (
+                    <Ionicons name="log-out-outline" size={size} color={colorScheme === 'dark' ? '#fff' : '#000'} />
+                )}
+                onPress={() => {
+                    useAuthStore.getState().logout();
+                    router.replace('/login');
+                }}
+            />
         </DrawerContentScrollView>
     );
 }
@@ -121,6 +144,14 @@ export default function DrawerLayout() {
                         drawerIcon: ({ size, color }) => (
                             <Ionicons name="rocket-outline" size={size} color={color} />
                         ),
+                    }}
+                />
+                <Drawer.Screen
+                    name="profile"
+                    options={{
+                        drawerLabel: 'Perfil',
+                        title: 'Perfil',
+                        drawerItemStyle: { display: 'none' } // Hide from default list
                     }}
                 />
             </Drawer>
