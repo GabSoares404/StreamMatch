@@ -19,9 +19,17 @@ export default function MovieCard({ movie, onPress, width }: MovieCardProps) {
     const [activeIndex, setActiveIndex] = useState(0);
     const scrollRef = useRef<ScrollView>(null);
 
+    const posterUri = movie.poster && movie.poster.toString().startsWith('http')
+        ? movie.poster
+        : `https://simkl.in/posters/${movie.poster}_m.jpg`;
+
+    const fanartUri = movie.fanart && movie.fanart.toString().startsWith('http')
+        ? movie.fanart
+        : `https://simkl.in/fanart/${movie.fanart}_medium.jpg`;
+
     const images = [
-        { uri: `https://simkl.in/posters/${movie.poster}_m.jpg`, type: 'Poster' },
-        { uri: `https://simkl.in/fanart/${movie.fanart}_medium.jpg`, type: 'Fanart' }
+        { uri: posterUri, type: 'Poster' },
+        { uri: fanartUri, type: 'Fanart' }
     ];
 
     const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {

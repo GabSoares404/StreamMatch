@@ -1,44 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import MediaGrid from '../../components/MediaGrid';
-import { searchMovies, fetchTrendingMovies, UnifiedMedia } from '../../services/api';
-
+import { searchMovies, fetchTrendingMovies } from '../../services/api';
 import SearchBar from '../../components/SearchBar';
+import { useMediaScreen } from '../../hooks/useMediaScreen';
 
 export default function Movies() {
-    const [movies, setMovies] = useState<UnifiedMedia[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [searchQuery, setSearchQuery] = useState('');
-
-    useEffect(() => {
-        loadData();
-    }, []);
-
-    const loadData = async () => {
-        setIsLoading(true);
-        const data = await fetchTrendingMovies();
-        setMovies(data);
-        setIsLoading(false);
-    };
-
-    const handleSearch = async () => {
-        if (!searchQuery.trim()) {
-            loadData();
-            return;
-        }
-        setIsLoading(true);
-        const results = await searchMovies(searchQuery);
-        setMovies(results);
-        setIsLoading(false);
-    };
-
-    const handleRefresh = async () => {
-        setSearchQuery('');
-        await loadData();
-    };
+    const { data, isLoading, searchQuery, setSearchQuery, handleSearch, handleRefresh } = useMediaScreen(fetchTrendingMovies, searchMovies);
 
     return (
         <MediaGrid
-            data={movies}
+            data={data}
             isLoading={isLoading}
             title="Filmes"
             refreshing={isLoading}

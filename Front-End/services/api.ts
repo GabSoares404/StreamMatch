@@ -106,6 +106,52 @@ export const searchMovies = async (query: string): Promise<UnifiedMedia[]> => {
     }
 };
 
+export const searchTV = async (query: string): Promise<UnifiedMedia[]> => {
+    if (!TMDB_API_KEY) return [];
+    try {
+        const response = await fetch(`${TMDB_BASE}/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&language=pt-BR`);
+        if (!response.ok) throw new Error(`Failed to search tv: ${response.statusText}`);
+        const data = await response.json();
+        return data.results.map((item: any) => ({
+            id: item.id,
+            title: item.name,
+            poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '',
+            fanart: item.backdrop_path ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}` : '',
+            year: item.first_air_date ? item.first_air_date.substring(0, 4) : '',
+            rating: item.vote_average,
+            type: 'tv',
+            source: 'tmdb'
+        }));
+    } catch (error) {
+        console.error("Search TV Error:", error);
+        return [];
+    }
+};
+
+export const searchAnime = async (query: string): Promise<UnifiedMedia[]> => {
+    // Using TMDb for Anime search to ensure PT-BR title support (e.g. "Cavaleiros do Zodíaco")
+    // We map the type to 'anime' so the app treats it correctly (Simkl resolution will happen later)
+    if (!TMDB_API_KEY) return [];
+    try {
+        const response = await fetch(`${TMDB_BASE}/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&language=pt-BR`);
+        if (!response.ok) throw new Error(`Failed to search anime: ${response.statusText}`);
+        const data = await response.json();
+        return data.results.map((item: any) => ({
+            id: item.id,
+            title: item.name,
+            poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '',
+            fanart: item.backdrop_path ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}` : '',
+            year: item.first_air_date ? item.first_air_date.substring(0, 4) : '',
+            rating: item.vote_average,
+            type: 'anime', // Force type anime
+            source: 'tmdb'
+        }));
+    } catch (error) {
+        console.error("Search Anime Error:", error);
+        return [];
+    }
+};
+
 export const fetchTrendingAnime = async (): Promise<UnifiedMedia[]> => {
     try {
         const response = await fetch(`${API_BASE}/anime/trending/month?client_id=${CLIENT_ID}`);
@@ -200,6 +246,40 @@ export const fetchTMDBDetails = async (tmdbId: number, type: 'movie' | 'tv') => 
         console.error("TMDB Fetch Error:", error);
         return null;
     }
+};
+
+export const fetchDetailsFromTmdb = async (tmdbId: number, type: 'movie' | 'tv' | 'anime'): Promise<MediaDetail | null> => {
+    // Fallback: Construct MediaDetail purely from TMDb
+    // Anime is treated as TV in TMDb usually
+    const tmdbType = type === 'movie' ? 'movie' : 'tv';
+    const tmdbData = await fetchTMDBDetails(tmdbId, tmdbType);
+
+    if (!tmdbData) return null;
+
+    const poster = tmdbData.poster_path ? `https://image.tmdb.org/t/p/w500${tmdbData.poster_path}` : '';
+    const fanart = tmdbData.backdrop_path ? `https://image.tmdb.org/t/p/w1280${tmdbData.backdrop_path}` : '';
+
+    return {
+        id: tmdbData.id,
+        title: tmdbData.title || tmdbData.name,
+        poster: poster,
+        fanart: fanart,
+        year: tmdbData.release_date?.substring(0, 4) || tmdbData.first_air_date?.substring(0, 4),
+        rating: tmdbData.vote_average,
+        type: type,
+        overview: tmdbData.overview,
+        runtime: tmdbData.runtime ? `${tmdbData.runtime}` : undefined,
+        country: tmdbData.production_countries?.[0]?.iso_3166_1,
+        status: tmdbData.status,
+        genres: tmdbData.genres?.map((g: any) => g.name),
+        ratings: { imdb: { rating: tmdbData.vote_average, votes: tmdbData.vote_count } }, // Proxy TMDb as IMDb/Simkl rating for display
+        tmdbRating: tmdbData.vote_average,
+        providers: tmdbData['watch/providers']?.results?.BR?.flatrate?.map((p: any) => ({
+            provider_id: p.provider_id,
+            provider_name: p.provider_name,
+            logo_path: `https://image.tmdb.org/t/p/w200${p.logo_path}`
+        })) || []
+    };
 };
 
 export const getSimklIdFromTmdb = async (tmdbId: number): Promise<number | null> => {

@@ -1,7 +1,7 @@
 import { useLocalSearchParams, Stack } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, Dimensions, ActivityIndicator } from 'react-native';
-import { fetchGenericDetails, MediaDetail, getSimklIdFromTmdb } from '../../services/api';
+import { fetchGenericDetails, MediaDetail, getSimklIdFromTmdb, fetchDetailsFromTmdb } from '../../services/api';
 import { useColorScheme } from '../../hooks/use-color-scheme';
 import { Colors } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,12 +21,18 @@ export default function MediaDetails() {
     const loadDetails = async () => {
         setLoading(true);
         if (id && type) {
-            let finalId = Number(id);
+            let data;
             if (source === 'tmdb') {
-                const simklId = await getSimklIdFromTmdb(finalId);
-                if (simklId) finalId = simklId;
+                const simklId = await getSimklIdFromTmdb(Number(id));
+                if (simklId) {
+                    data = await fetchGenericDetails(simklId, type as 'movie' | 'anime' | 'tv');
+                } else {
+                    // Fallback to TMDb-only details if Simkl resolution fails
+                    data = await fetchDetailsFromTmdb(Number(id), type as 'movie' | 'anime' | 'tv');
+                }
+            } else {
+                data = await fetchGenericDetails(Number(id), type as 'movie' | 'anime' | 'tv');
             }
-            const data = await fetchGenericDetails(finalId, type as 'movie' | 'anime' | 'tv');
             setMedia(data);
         }
         setLoading(false);

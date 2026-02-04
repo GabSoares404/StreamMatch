@@ -1,7 +1,7 @@
 import { useLocalSearchParams, Stack } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, Dimensions, ActivityIndicator } from 'react-native';
-import { fetchGenericDetails, MediaDetail, getSimklIdFromTmdb } from '../../services/api';
+import { fetchGenericDetails, MediaDetail, getSimklIdFromTmdb, fetchDetailsFromTmdb } from '../../services/api';
 import { useColorScheme } from '../../hooks/use-color-scheme';
 import { Colors } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,16 +20,19 @@ export default function MovieDetails() {
 
     const loadDetails = async () => {
         setLoading(true);
-        if (id) {
-            let finalId = Number(id);
-            if (source === 'tmdb') {
-                const simklId = await getSimklIdFromTmdb(finalId);
-                if (simklId) finalId = simklId;
+        let data;
+        if (source === 'tmdb') {
+            const simklId = await getSimklIdFromTmdb(Number(id));
+            if (simklId) {
+                data = await fetchGenericDetails(simklId, 'movie');
+            } else {
+                // Fallback to TMDb-only details
+                data = await fetchDetailsFromTmdb(Number(id), 'movie');
             }
-            // Force type 'movie' since this is the movie route
-            const data = await fetchGenericDetails(finalId, 'movie');
-            setMovie(data);
+        } else {
+            data = await fetchGenericDetails(Number(id), 'movie');
         }
+        setMovie(data);
         setLoading(false);
     };
 

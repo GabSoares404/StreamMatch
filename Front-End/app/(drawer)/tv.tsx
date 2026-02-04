@@ -1,23 +1,27 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import MediaGrid from '../../components/MediaGrid';
-import { fetchTrendingTV, UnifiedMedia } from '../../services/api';
-
+import { fetchTrendingTV, searchTV } from '../../services/api';
 import SearchBar from '../../components/SearchBar';
+import { useMediaScreen } from '../../hooks/useMediaScreen';
 
 export default function TV() {
-    const [data, setData] = useState<UnifiedMedia[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const { data, isLoading, searchQuery, setSearchQuery, handleSearch, handleRefresh } = useMediaScreen(fetchTrendingTV, searchTV);
 
-    useEffect(() => {
-        loadData();
-    }, []);
-
-    const loadData = async () => {
-        setIsLoading(true);
-        const res = await fetchTrendingTV();
-        setData(res);
-        setIsLoading(false);
-    };
-
-    return <MediaGrid data={data} isLoading={isLoading} title="TV" ListHeaderComponent={<SearchBar searchBarText="Buscar em TV" />} />;
+    return (
+        <MediaGrid
+            data={data}
+            isLoading={isLoading}
+            title="TV"
+            refreshing={isLoading}
+            onRefresh={handleRefresh}
+            ListHeaderComponent={
+                <SearchBar
+                    searchBarText="Buscar em TV"
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    onSubmit={handleSearch}
+                />
+            }
+        />
+    );
 }
