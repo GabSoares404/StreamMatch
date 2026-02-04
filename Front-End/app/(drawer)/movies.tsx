@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View } from 'react-native';
 import MediaGrid from '../../components/MediaGrid';
 import { fetchTrendingMovies, UnifiedMedia } from '../../services/api';
+
+import SearchBar from '../../components/SearchBar';
 
 export default function Movies() {
     const [movies, setMovies] = useState<UnifiedMedia[]>([]);
@@ -18,5 +19,5 @@ export default function Movies() {
         setIsLoading(false);
     };
 
-    return <MediaGrid data={movies} isLoading={isLoading} title="Filmes" />;
+    return <MediaGrid data={movies} isLoading={isLoading} title="Filmes" ListHeaderComponent={<SearchBar searchBarText="Buscar filme" />} />;
 }

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import MediaGrid from '../../components/MediaGrid';
 import { fetchTrendingSeries, UnifiedMedia } from '../../services/api';
 
+import SearchBar from '../../components/SearchBar';
+
 export default function Series() {
     const [data, setData] = useState<UnifiedMedia[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -17,5 +19,5 @@ export default function Series() {
         setIsLoading(false);
     };
 
-    return <MediaGrid data={data} isLoading={isLoading} title="Séries" />;
+    return <MediaGrid data={data} isLoading={isLoading} title="Séries" ListHeaderComponent={<SearchBar searchBarText="Buscar série" />} />;
 }

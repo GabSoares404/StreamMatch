@@ -15,9 +15,10 @@ interface MediaGridProps {
     data: UnifiedMedia[];
     isLoading: boolean;
     title: string;
+    ListHeaderComponent?: React.ComponentType<any> | React.ReactElement | null;
 }
 
-export default function MediaGrid({ data, isLoading, title }: MediaGridProps) {
+export default function MediaGrid({ data, isLoading, title, ListHeaderComponent }: MediaGridProps) {
     const theme = useColorScheme() ?? 'light';
     const router = useRouter();
     const { width } = useWindowDimensions();
@@ -59,6 +60,7 @@ export default function MediaGrid({ data, isLoading, title }: MediaGridProps) {
                 contentContainerStyle={styles.list}
                 showsVerticalScrollIndicator={false}
                 columnWrapperStyle={styles.columnWrapper}
+                ListHeaderComponent={ListHeaderComponent}
             />
         </View>
     );
