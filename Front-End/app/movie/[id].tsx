@@ -1,68 +1,109 @@
-import { useLocalSearchParams } from 'expo-router';
-import { View, Text, StyleSheet, ScrollView, Image, Dimensions } from 'react-native';
-import { useMovieStore } from '../../store/useMovieStore';
+import { useLocalSearchParams, Stack } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, Dimensions, ActivityIndicator } from 'react-native';
+import { fetchGenericDetails, MediaDetail, getSimklIdFromTmdb } from '../../services/api';
 import { useColorScheme } from '../../hooks/use-color-scheme';
 import { Colors } from '../../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
 export default function MovieDetails() {
-    const { id } = useLocalSearchParams();
-    const { getMovieById } = useMovieStore();
+    const { id, source } = useLocalSearchParams();
+    const [movie, setMovie] = useState<MediaDetail | null>(null);
+    const [loading, setLoading] = useState(true);
     const theme = useColorScheme() ?? 'light';
 
-    const parsedMovie = getMovieById(Number(id));
+    useEffect(() => {
+        loadDetails();
+    }, [id]);
 
-    if (!parsedMovie) {
+    const loadDetails = async () => {
+        setLoading(true);
+        if (id) {
+            let finalId = Number(id);
+            if (source === 'tmdb') {
+                const simklId = await getSimklIdFromTmdb(finalId);
+                if (simklId) finalId = simklId;
+            }
+            // Force type 'movie' since this is the movie route
+            const data = await fetchGenericDetails(finalId, 'movie');
+            setMovie(data);
+        }
+        setLoading(false);
+    };
+
+    if (loading) {
         return (
-            <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
-                <Text style={[styles.text, { color: Colors[theme].text }]}>Movie not found.</Text>
+            <View style={[styles.center, { backgroundColor: Colors[theme].background }]}>
+                <ActivityIndicator size="large" color={Colors[theme].tint} />
             </View>
         );
     }
 
-    const posterUrl = `https://simkl.in/posters/${parsedMovie.poster}_m.jpg`;
-    const fanartUrl = `https://simkl.in/fanart/${parsedMovie.fanart}_medium.jpg`;
+    if (!movie) {
+        return (
+            <View style={[styles.center, { backgroundColor: Colors[theme].background }]}>
+                <Text style={{ color: Colors[theme].text }}>Filme não encontrado.</Text>
+            </View>
+        );
+    }
+
+    const posterUrl = movie.poster
+        ? (movie.poster.toString().startsWith('http') ? movie.poster : `https://simkl.in/posters/${movie.poster}_m.jpg`)
+        : null;
+    const fanartUrl = movie.fanart
+        ? (movie.fanart.toString().startsWith('http') ? movie.fanart : `https://simkl.in/fanart/${movie.fanart}_medium.jpg`)
+        : null;
 
     return (
         <ScrollView style={[styles.container, { backgroundColor: Colors[theme].background }]}>
-            <Image source={{ uri: fanartUrl }} style={styles.fanart} />
+            <Stack.Screen options={{ title: movie.title || 'Detalhes', headerBackTitle: 'Voltar' }} />
+
+            <View style={{ width: width, height: 250, position: 'relative' }}>
+                {fanartUrl && <Image source={{ uri: fanartUrl }} style={styles.fanart} />}
+            </View>
             <View style={styles.posterContainer}>
-                <Image source={{ uri: posterUrl }} style={styles.poster} />
+                {posterUrl ? (
+                    <Image source={{ uri: posterUrl }} style={styles.poster} />
+                ) : (
+                    <View style={[styles.poster, { backgroundColor: '#333', justifyContent: 'center', alignItems: 'center' }]}>
+                        <Ionicons name="image-outline" size={40} color="#fff" />
+                    </View>
+                )}
             </View>
 
             <View style={styles.content}>
-                <Text style={[styles.title, { color: Colors[theme].text }]}>{parsedMovie.title}</Text>
+                <Text style={[styles.title, { color: Colors[theme].text }]}>{movie.title}</Text>
                 <View style={styles.row}>
-                    <Text style={[styles.year, { color: Colors[theme].icon }]}>{parsedMovie.year}</Text>
-                    <Text style={[styles.runtime, { color: Colors[theme].icon }]}>{parsedMovie.runtime}</Text>
-                    <Text style={[styles.country, { color: Colors[theme].icon }]}>{parsedMovie.country?.toUpperCase()}</Text>
+                    <Text style={[styles.text, { color: Colors[theme].icon }]}>{movie.year} • {movie.runtime ? `${movie.runtime} min` : 'N/A'} • {movie.country?.toUpperCase()}</Text>
                 </View>
 
                 <View style={[styles.stats, { backgroundColor: theme === 'dark' ? '#1E1E1E' : '#F0F0F0' }]}>
                     <View style={styles.statItem}>
-                        <Text style={[styles.statLabel, { color: Colors[theme].icon }]}>Watchers</Text>
-                        <Text style={[styles.statValue, { color: Colors[theme].text }]}>{parsedMovie.watched}</Text>
+                        <Text style={[styles.statLabel, { color: Colors[theme].icon }]}>Simkl</Text>
+                        <Text style={[styles.statValue, { color: Colors[theme].text }]}>{movie.ratings?.simkl?.rating?.toFixed(1) || '-'}</Text>
                     </View>
                     <View style={styles.statItem}>
-                        <Text style={[styles.statLabel, { color: Colors[theme].icon }]}>Plan to Watch</Text>
-                        <Text style={[styles.statValue, { color: Colors[theme].text }]}>{parsedMovie.plan_to_watch}</Text>
+                        <Text style={[styles.statLabel, { color: Colors[theme].icon }]}>IMDb</Text>
+                        <Text style={[styles.statValue, { color: Colors[theme].text }]}>{movie.ratings?.imdb?.rating?.toFixed(1) || '-'}</Text>
                     </View>
                     <View style={styles.statItem}>
-                        <Text style={[styles.statLabel, { color: Colors[theme].icon }]}>Rating</Text>
-                        <Text style={[styles.statValue, { color: Colors[theme].text }]}>{parsedMovie.rating?.toFixed(1)}</Text>
+                        <Text style={[styles.statLabel, { color: Colors[theme].icon }]}>TMDB</Text>
+                        <Text style={[styles.statValue, { color: Colors[theme].text }]}>{movie.tmdbRating?.toFixed(1) || '-'}</Text>
                     </View>
                 </View>
+
+                {movie.overview && (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Sinopse</Text>
+                        <Text style={[styles.text, { color: Colors[theme].text, lineHeight: 24 }]}>{movie.overview}</Text>
+                    </View>
+                )}
 
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Status</Text>
-                    <Text style={[styles.text, { color: Colors[theme].text }]}>{parsedMovie.status}</Text>
-                </View>
-
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Ratings</Text>
-                    <Text style={[styles.text, { color: Colors[theme].text }]}>Simkl: {parsedMovie.ratings.simkl?.rating || '-'} ({parsedMovie.ratings.simkl?.votes || '-'} votes)</Text>
-                    <Text style={[styles.text, { color: Colors[theme].text }]}>IMDb: {parsedMovie.ratings.imdb?.rating || '-'} ({parsedMovie.ratings.imdb?.votes || '-'} votes)</Text>
+                    <Text style={[styles.text, { color: Colors[theme].text }]}>{movie.status || 'N/A'}</Text>
                 </View>
             </View>
         </ScrollView>
@@ -72,6 +113,11 @@ export default function MovieDetails() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+    },
+    center: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     fanart: {
         width: width,

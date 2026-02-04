@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, FlatList, ActivityIndicator, StyleSheet, Text, useWindowDimensions } from 'react-native';
+import { View, FlatList, ActivityIndicator, StyleSheet, Text, useWindowDimensions, RefreshControl } from 'react-native';
 import MovieCard from './MovieCard';
 import { UnifiedMedia } from '../services/api';
 import { useColorScheme } from '../hooks/use-color-scheme';
@@ -16,9 +16,11 @@ interface MediaGridProps {
     isLoading: boolean;
     title: string;
     ListHeaderComponent?: React.ComponentType<any> | React.ReactElement | null;
+    refreshing?: boolean;
+    onRefresh?: () => void;
 }
 
-export default function MediaGrid({ data, isLoading, title, ListHeaderComponent }: MediaGridProps) {
+export default function MediaGrid({ data, isLoading, title, ListHeaderComponent, refreshing, onRefresh }: MediaGridProps) {
     const theme = useColorScheme() ?? 'light';
     const router = useRouter();
     const { width } = useWindowDimensions();
@@ -52,7 +54,7 @@ export default function MediaGrid({ data, isLoading, title, ListHeaderComponent 
                         onPress={() => {
                             router.push({
                                 pathname: '/media/[id]',
-                                params: { id: item.id, type: item.type }
+                                params: { id: item.id, type: item.type, source: item.source || 'simkl' }
                             });
                         }}
                     />
@@ -61,6 +63,11 @@ export default function MediaGrid({ data, isLoading, title, ListHeaderComponent 
                 showsVerticalScrollIndicator={false}
                 columnWrapperStyle={styles.columnWrapper}
                 ListHeaderComponent={ListHeaderComponent}
+                refreshControl={
+                    onRefresh ? (
+                        <RefreshControl refreshing={refreshing || false} onRefresh={onRefresh} tintColor={Colors[theme].tint} />
+                    ) : undefined
+                }
             />
         </View>
     );

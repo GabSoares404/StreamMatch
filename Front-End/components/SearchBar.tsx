@@ -1,21 +1,32 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, TextInput, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '../hooks/use-color-scheme';
 import { Colors } from '../constants/theme';
 
 interface SearchBarProps {
     searchBarText: string;
+    value?: string;
+    onChangeText?: (text: string) => void;
+    onSubmit?: () => void;
 }
 
-export default function SearchBar({ searchBarText }: SearchBarProps) {
+export default function SearchBar({ searchBarText, value, onChangeText, onSubmit }: SearchBarProps) {
     const theme = useColorScheme() ?? 'light';
 
     return (
         <View style={[styles.searchContainer, { backgroundColor: Colors[theme].background }]}>
             <View style={[styles.searchBar, { backgroundColor: Colors[theme].background === '#151718' ? '#2f3336' : '#f0f0f0' }]}>
                 <Ionicons name="search" size={20} color={Colors[theme].icon} style={styles.searchIcon} />
-                <Text style={[styles.searchText, { color: Colors[theme].icon }]}>{searchBarText}</Text>
+                <TextInput
+                    style={[styles.input, { color: Colors[theme].text }]}
+                    placeholder={searchBarText}
+                    placeholderTextColor={Colors[theme].icon}
+                    value={value}
+                    onChangeText={onChangeText}
+                    onSubmitEditing={onSubmit}
+                    returnKeyType="search"
+                />
             </View>
         </View>
     );
@@ -37,8 +48,8 @@ const styles = StyleSheet.create({
     searchIcon: {
         marginRight: 8,
     },
-    searchText: {
+    input: {
+        flex: 1,
         fontSize: 16,
-        opacity: 0.7,
     },
 });

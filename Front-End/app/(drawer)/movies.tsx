@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import MediaGrid from '../../components/MediaGrid';
-import { fetchTrendingMovies, UnifiedMedia } from '../../services/api';
+import { searchMovies, fetchTrendingMovies, UnifiedMedia } from '../../services/api';
 
 import SearchBar from '../../components/SearchBar';
 
 export default function Movies() {
     const [movies, setMovies] = useState<UnifiedMedia[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         loadData();
@@ -19,5 +20,37 @@ export default function Movies() {
         setIsLoading(false);
     };
 
-    return <MediaGrid data={movies} isLoading={isLoading} title="Filmes" ListHeaderComponent={<SearchBar searchBarText="Buscar filme" />} />;
+    const handleSearch = async () => {
+        if (!searchQuery.trim()) {
+            loadData();
+            return;
+        }
+        setIsLoading(true);
+        const results = await searchMovies(searchQuery);
+        setMovies(results);
+        setIsLoading(false);
+    };
+
+    const handleRefresh = async () => {
+        setSearchQuery('');
+        await loadData();
+    };
+
+    return (
+        <MediaGrid
+            data={movies}
+            isLoading={isLoading}
+            title="Filmes"
+            refreshing={isLoading}
+            onRefresh={handleRefresh}
+            ListHeaderComponent={
+                <SearchBar
+                    searchBarText="Buscar filme"
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    onSubmit={handleSearch}
+                />
+            }
+        />
+    );
 }

@@ -61,6 +61,7 @@ export interface UnifiedMedia {
     year?: string;
     rating?: number;
     type: 'movie' | 'anime' | 'tv';
+    source?: 'simkl' | 'tmdb';
 }
 
 export const fetchTrendingMovies = async (): Promise<UnifiedMedia[]> => {
@@ -79,6 +80,28 @@ export const fetchTrendingMovies = async (): Promise<UnifiedMedia[]> => {
         }));
     } catch (error) {
         console.error("Fetch Trending Movies Error:", error);
+        return [];
+    }
+};
+
+export const searchMovies = async (query: string): Promise<UnifiedMedia[]> => {
+    if (!TMDB_API_KEY) return [];
+    try {
+        const response = await fetch(`${TMDB_BASE}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&language=pt-BR`);
+        if (!response.ok) throw new Error(`Failed to search movies: ${response.statusText}`);
+        const data = await response.json();
+        return data.results.map((item: any) => ({
+            id: item.id,
+            title: item.title,
+            poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '',
+            fanart: item.backdrop_path ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}` : '',
+            year: item.release_date ? item.release_date.substring(0, 4) : '',
+            rating: item.vote_average,
+            type: 'movie',
+            source: 'tmdb'
+        }));
+    } catch (error) {
+        console.error("Search Movies Error:", error);
         return [];
     }
 };
@@ -175,6 +198,21 @@ export const fetchTMDBDetails = async (tmdbId: number, type: 'movie' | 'tv') => 
         return await response.json();
     } catch (error) {
         console.error("TMDB Fetch Error:", error);
+        return null;
+    }
+};
+
+export const getSimklIdFromTmdb = async (tmdbId: number): Promise<number | null> => {
+    try {
+        const response = await fetch(`${API_BASE}/search/id?tmdb=${tmdbId}&client_id=${CLIENT_ID}`);
+        if (!response.ok) return null;
+        const data = await response.json();
+        if (data && data.length > 0 && data[0].ids && data[0].ids.simkl) {
+            return data[0].ids.simkl;
+        }
+        return null;
+    } catch (error) {
+        console.error("Get Simkl ID Error:", error);
         return null;
     }
 };

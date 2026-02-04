@@ -1,7 +1,7 @@
 import { useLocalSearchParams, Stack } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, Dimensions, ActivityIndicator } from 'react-native';
-import { fetchGenericDetails, MediaDetail } from '../../services/api';
+import { fetchGenericDetails, MediaDetail, getSimklIdFromTmdb } from '../../services/api';
 import { useColorScheme } from '../../hooks/use-color-scheme';
 import { Colors } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,7 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 const { width } = Dimensions.get('window');
 
 export default function MediaDetails() {
-    const { id, type } = useLocalSearchParams();
+    const { id, type, source } = useLocalSearchParams();
     const [media, setMedia] = useState<MediaDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const theme = useColorScheme() ?? 'light';
@@ -21,7 +21,12 @@ export default function MediaDetails() {
     const loadDetails = async () => {
         setLoading(true);
         if (id && type) {
-            const data = await fetchGenericDetails(Number(id), type as 'movie' | 'anime' | 'tv');
+            let finalId = Number(id);
+            if (source === 'tmdb') {
+                const simklId = await getSimklIdFromTmdb(finalId);
+                if (simklId) finalId = simklId;
+            }
+            const data = await fetchGenericDetails(finalId, type as 'movie' | 'anime' | 'tv');
             setMedia(data);
         }
         setLoading(false);
