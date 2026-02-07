@@ -22,7 +22,7 @@ export default function LoginScreen() {
         setLoading(true);
         try {
             // Use environment variable or fallback
-            const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.4:8000';
+            const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.1.1.4:8000';
             console.log('Attempting login to:', API_URL);
 
             const response = await fetch(`${API_URL}/login`, {

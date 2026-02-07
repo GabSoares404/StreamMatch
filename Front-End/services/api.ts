@@ -64,19 +64,24 @@ export interface UnifiedMedia {
     source?: 'simkl' | 'tmdb';
 }
 
+const TMDB_API_KEY = process.env.EXPO_PUBLIC_TMDB_API_KEY;
+const TMDB_BASE = 'https://api.themoviedb.org/3';
+
 export const fetchTrendingMovies = async (): Promise<UnifiedMedia[]> => {
+    if (!TMDB_API_KEY) return [];
     try {
-        const response = await fetch(`${API_BASE}/movies/trending/month?client_id=${CLIENT_ID}`);
+        const response = await fetch(`${TMDB_BASE}/trending/movie/week?api_key=${TMDB_API_KEY}&language=pt-BR`);
         if (!response.ok) throw new Error(`Failed to fetch trending movies: ${response.statusText}`);
         const data = await response.json();
-        return data.slice(0, 20).map((item: any) => ({
-            id: item.ids.simkl || item.ids.simkl_id || Math.floor(Math.random() * 1000000),
+        return data.results.map((item: any) => ({
+            id: item.id,
             title: item.title,
-            poster: item.poster,
-            fanart: item.fanart,
-            year: item.year,
-            rating: item.ratings?.simkl?.rating || item.ratings?.imdb?.rating,
-            type: 'movie'
+            poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '',
+            fanart: item.backdrop_path ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}` : '',
+            year: item.release_date ? item.release_date.substring(0, 4) : '',
+            rating: item.vote_average,
+            type: 'movie',
+            source: 'tmdb'
         }));
     } catch (error) {
         console.error("Fetch Trending Movies Error:", error);
@@ -129,22 +134,19 @@ export const searchTV = async (query: string): Promise<UnifiedMedia[]> => {
 };
 
 export const searchAnime = async (query: string): Promise<UnifiedMedia[]> => {
-    // Using TMDb for Anime search to ensure PT-BR title support (e.g. "Cavaleiros do Zodíaco")
-    // We map the type to 'anime' so the app treats it correctly (Simkl resolution will happen later)
-    if (!TMDB_API_KEY) return [];
     try {
-        const response = await fetch(`${TMDB_BASE}/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&language=pt-BR`);
+        const response = await fetch(`${API_BASE}/search/anime?q=${encodeURIComponent(query)}&client_id=${CLIENT_ID}`);
         if (!response.ok) throw new Error(`Failed to search anime: ${response.statusText}`);
         const data = await response.json();
-        return data.results.map((item: any) => ({
-            id: item.id,
-            title: item.name,
-            poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '',
-            fanart: item.backdrop_path ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}` : '',
-            year: item.first_air_date ? item.first_air_date.substring(0, 4) : '',
-            rating: item.vote_average,
-            type: 'anime', // Force type anime
-            source: 'tmdb'
+        return data.filter((item: any) => item.ids && (item.ids.simkl || item.ids.simkl_id)).map((item: any) => ({
+            id: item.ids.simkl || item.ids.simkl_id,
+            title: item.title,
+            poster: item.poster,
+            fanart: item.fanart,
+            year: item.year,
+            rating: item.ratings?.simkl?.rating || item.ratings?.mal?.rating,
+            type: 'anime',
+            source: 'simkl'
         }));
     } catch (error) {
         console.error("Search Anime Error:", error);
@@ -164,7 +166,8 @@ export const fetchTrendingAnime = async (): Promise<UnifiedMedia[]> => {
             fanart: item.fanart,
             year: item.year,
             rating: item.ratings?.simkl?.rating || item.ratings?.mal?.rating,
-            type: 'anime'
+            type: 'anime',
+            source: 'simkl'
         }));
     } catch (error) {
         console.error("Fetch Trending Anime Error:", error);
@@ -173,18 +176,20 @@ export const fetchTrendingAnime = async (): Promise<UnifiedMedia[]> => {
 };
 
 export const fetchTrendingTV = async (): Promise<UnifiedMedia[]> => {
+    if (!TMDB_API_KEY) return [];
     try {
-        const response = await fetch(`${API_BASE}/tv/trending/month?client_id=${CLIENT_ID}`);
+        const response = await fetch(`${TMDB_BASE}/trending/tv/week?api_key=${TMDB_API_KEY}&language=pt-BR`);
         if (!response.ok) throw new Error(`Failed to fetch trending tv: ${response.statusText}`);
         const data = await response.json();
-        return data.slice(0, 20).map((item: any) => ({
-            id: item.ids.simkl || item.ids.simkl_id || Math.floor(Math.random() * 1000000),
-            title: item.title,
-            poster: item.poster,
-            fanart: item.fanart,
-            year: item.year,
-            rating: item.ratings?.simkl?.rating || item.ratings?.imdb?.rating,
-            type: 'tv'
+        return data.results.map((item: any) => ({
+            id: item.id,
+            title: item.name,
+            poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '',
+            fanart: item.backdrop_path ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}` : '',
+            year: item.first_air_date ? item.first_air_date.substring(0, 4) : '',
+            rating: item.vote_average,
+            type: 'tv',
+            source: 'tmdb'
         }));
     } catch (error) {
         console.error("Fetch Trending TV Error:", error);
@@ -193,10 +198,7 @@ export const fetchTrendingTV = async (): Promise<UnifiedMedia[]> => {
 };
 
 export const fetchTrendingSeries = async (): Promise<UnifiedMedia[]> => {
-    // Simkl uses 'tv' for series basically. We can filter or just use the same endpoint.
-    // For specific "Series" vs "TV" distinction, Simkl separates by type maybe?
-    // For now, mapping 'Series' tab to standard TV trending, same as TV tab implies.
-    // User might want distinct content, but mostly they are synonyms in API context.
+    // TMDB doesn't separate generic Series vs TV essentially, so we reuse the TV endpoint
     return fetchTrendingTV();
 };
 
@@ -225,6 +227,7 @@ export interface MediaDetail extends UnifiedMedia {
     year?: string;
     tmdbRating?: number;
     providers?: WatchProvider[];
+    ids?: any;
 }
 
 export interface WatchProvider {
@@ -233,8 +236,7 @@ export interface WatchProvider {
     logo_path: string;
 }
 
-const TMDB_API_KEY = process.env.EXPO_PUBLIC_TMDB_API_KEY;
-const TMDB_BASE = 'https://api.themoviedb.org/3';
+
 
 export const fetchTMDBDetails = async (tmdbId: number, type: 'movie' | 'tv') => {
     if (!TMDB_API_KEY) return null;
@@ -261,6 +263,7 @@ export const fetchDetailsFromTmdb = async (tmdbId: number, type: 'movie' | 'tv' 
 
     return {
         id: tmdbData.id,
+        ids: { tmdb: tmdbData.id }, // Provide minimal IDs structure
         title: tmdbData.title || tmdbData.name,
         poster: poster,
         fanart: fanart,
@@ -366,6 +369,7 @@ export const fetchGenericDetails = async (id: number, type: 'movie' | 'anime' | 
             status: simklData.status,
             genres: simklData.genres,
             ratings: simklData.ratings,
+            ids: simklData.ids,
             tmdbRating: tmdbData?.vote_average,
             providers: providers
         };

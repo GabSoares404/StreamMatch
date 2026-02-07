@@ -28,7 +28,7 @@ export default function RegisterScreen() {
         try {
             const API_URL = process.env.EXPO_PUBLIC_API_URL;
             // Fallback for development if env is not set
-            const apiUrl = API_URL || 'http://192.168.1.10:8000';
+            const apiUrl = API_URL || 'http://10.1.1.4:8000';
 
             const response = await fetch(`${apiUrl}/register`, {
                 method: 'POST',

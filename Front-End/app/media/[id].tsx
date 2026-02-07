@@ -22,15 +22,32 @@ export default function MediaDetails() {
         setLoading(true);
         if (id && type) {
             let data;
-            if (source === 'tmdb') {
+            // Ensure source is treated as string and check for TMDB
+            const isTmdb = source === 'tmdb' || (Array.isArray(source) && source.includes('tmdb'));
+            const isAnime = type === 'anime';
+
+            if (isTmdb && !isAnime) {
+                // Movies and TV from TMDB -> Fetch directly, skipping Simkl resolution
+                console.log(`[MediaDetails] Loading TMDB Direct: ${id} (${type})`);
+                data = await fetchDetailsFromTmdb(Number(id), type as 'movie' | 'tv');
+            } else if (isTmdb && isAnime) {
+                // Anime from TMDB search -> Try to resolve to Simkl for better anime data
+                console.log(`[MediaDetails] Loading TMDB Anime, resolving to Simkl: ${id}`);
                 const simklId = await getSimklIdFromTmdb(Number(id));
+
                 if (simklId) {
-                    data = await fetchGenericDetails(simklId, type as 'movie' | 'anime' | 'tv');
-                } else {
-                    // Fallback to TMDb-only details if Simkl resolution fails
-                    data = await fetchDetailsFromTmdb(Number(id), type as 'movie' | 'anime' | 'tv');
+                    console.log(`[MediaDetails] Resolved Anime Simkl ID: ${simklId}`);
+                    data = await fetchGenericDetails(simklId, 'anime');
+                }
+
+                if (!data) {
+                    console.log(`[MediaDetails] Anime resolution failed. Fetching as TMDB TV/Movie fallback.`);
+                    // Fallback to TMDB if Simkl fails (treat anime as TV usually)
+                    data = await fetchDetailsFromTmdb(Number(id), 'tv');
                 }
             } else {
+                // Simkl source (Anime Trending or other)
+                console.log(`[MediaDetails] Loading Simkl ID: ${id} (${type})`);
                 data = await fetchGenericDetails(Number(id), type as 'movie' | 'anime' | 'tv');
             }
             setMedia(data);
