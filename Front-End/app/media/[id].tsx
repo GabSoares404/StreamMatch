@@ -50,6 +50,7 @@ export default function MediaDetails() {
                 console.log(`[MediaDetails] Loading Simkl ID: ${id} (${type})`);
                 data = await fetchGenericDetails(Number(id), type as 'movie' | 'anime' | 'tv');
             }
+            console.log(`[Provides] ids:`, data?.providers?.map(p => p.provider_name + " " + p.provider_id));
             setMedia(data);
         }
         setLoading(false);
