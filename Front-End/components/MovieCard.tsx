@@ -27,10 +27,7 @@ export default function MovieCard({ movie, onPress, width }: MovieCardProps) {
         ? movie.fanart
         : `https://simkl.in/fanart/${movie.fanart}_medium.jpg`;
 
-    const images = [
-        { uri: posterUri, type: 'Poster' },
-        { uri: fanartUri, type: 'Fanart' }
-    ];
+    const images = { uri: posterUri, type: 'Poster' };
 
     const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
         const slideSize = event.nativeEvent.layoutMeasurement.width;
@@ -38,13 +35,7 @@ export default function MovieCard({ movie, onPress, width }: MovieCardProps) {
         const roundIndex = Math.round(index);
         setActiveIndex(roundIndex);
     };
-
-    const scrollToIndex = (index: number) => {
-        if (index < 0 || index >= images.length) return;
-        scrollRef.current?.scrollTo({ x: index * width, animated: true });
-        setActiveIndex(index);
-    };
-
+''
     return (
         <View style={[
             styles.card,
@@ -61,43 +52,14 @@ export default function MovieCard({ movie, onPress, width }: MovieCardProps) {
                         scrollEventThrottle={16}
                         style={{ width: width, height: width * IMAGE_ASPECT_RATIO }}
                     >
-                        {images.map((img, idx) => (
-                            <Image
-                                key={idx}
-                                source={{ uri: img.uri }}
-                                style={{ width: width, height: width * IMAGE_ASPECT_RATIO, backgroundColor: '#333' }}
-                                resizeMode="cover"
-                            />
-                        ))}
+
+                    <Image
+                        source={{ uri: images.uri }}
+                        style={{ width: width, height: width * IMAGE_ASPECT_RATIO, backgroundColor: '#333' }}
+                        resizeMode="cover"
+                    />
+                    
                     </ScrollView>
-
-                    {/* Arrows */}
-                    <View style={styles.arrowContainer}>
-                        {activeIndex > 0 && (
-                            <TouchableOpacity onPress={() => scrollToIndex(activeIndex - 1)} style={styles.arrowButton}>
-                                <Ionicons name="chevron-back" size={24} color="#FFF" />
-                            </TouchableOpacity>
-                        )}
-                        <View style={{ flex: 1 }} />
-                        {activeIndex < images.length - 1 && (
-                            <TouchableOpacity onPress={() => scrollToIndex(activeIndex + 1)} style={styles.arrowButton}>
-                                <Ionicons name="chevron-forward" size={24} color="#FFF" />
-                            </TouchableOpacity>
-                        )}
-                    </View>
-
-                    {/* Dots */}
-                    <View style={styles.dotsContainer}>
-                        {images.map((_, idx) => (
-                            <View
-                                key={idx}
-                                style={[
-                                    styles.dot,
-                                    { backgroundColor: idx === activeIndex ? '#E50914' : 'rgba(255,255,255,0.5)' }
-                                ]}
-                            />
-                        ))}
-                    </View>
 
                     {/* Rating Badge Overlay */}
                     <View style={styles.ratingBadgeOverlay}>
