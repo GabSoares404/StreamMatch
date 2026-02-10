@@ -79,15 +79,15 @@ export default function MediaDetails() {
     if (!media) {
         return (
             <View style={[styles.center, { backgroundColor: Colors[theme].background }]}>
-                <Text style={{ color: Colors[theme].text }}>Mídia não encontrada.</Text>
+                <Text style={{ color: Colors[theme].text }}>Mídia não encontrada ou erro ao carregar.</Text>
             </View>
         );
     }
 
-    const posterUrl = media.poster
+    const posterUrl = media.poster && media.poster !== 'null'
         ? (media.poster.toString().startsWith('http') ? media.poster : `https://simkl.in/posters/${media.poster}_m.jpg`)
         : null;
-    const fanartUrl = media.fanart
+    const fanartUrl = media.fanart && media.fanart !== 'null'
         ? (media.fanart.toString().startsWith('http') ? media.fanart : `https://simkl.in/fanart/${media.fanart}_medium.jpg`)
         : null;
 

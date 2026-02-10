@@ -99,3 +99,131 @@ async def login(credentials: UserCredentials):
 @app.get("/")
 def read_root():
     return {"message": "StreamMatch Backend is running"}
+
+# --- Watchlist Feature ---
+
+class WatchlistItem(BaseModel):
+    id: int
+    type: str # 'movie', 'tv', 'anime'
+
+class CreateWatchlist(BaseModel):
+    id_user: str
+    nome_list: str
+    items: list[dict] # List of objects with id and type
+
+@app.post("/watchlist")
+async def create_watchlist(data: CreateWatchlist):
+    try:
+        # Separate IDs by type
+        movies = []
+        series = []
+        tv = []
+        anime = []
+
+        for item in data.items:
+            media_id = item.get('id')
+            media_type = item.get('type')
+            
+            if media_type == 'movie':
+                movies.append(media_id)
+            elif media_type == 'tv':
+                tv.append(media_id)
+            elif media_type == 'anime':
+                anime.append(media_id)
+            elif media_type == 'series':
+                series.append(media_id)
+
+        # Construct payload for Supabase
+        payload = {
+            "id_user": data.id_user,
+            "nome_list": data.nome_list,
+            "id_film": movies if movies else None,
+            "id_serie": series if series else None,
+            "id_tv": tv if tv else None,
+            "id_anime": anime if anime else None
+        }
+
+        response = supabase.table("Watchlist").insert(payload).execute()
+        return {"message": "Lista criada com sucesso!", "data": response.data}
+
+    except Exception as e:
+        print(f"Error creating watchlist: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/watchlist/{user_id}")
+async def get_watchlists(user_id: str):
+    try:
+        response = supabase.table("Watchlist").select("*").eq("id_user", user_id).execute()
+        return response.data
+    except Exception as e:
+        print(f"Error fetching watchlists: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.put("/watchlist/{list_id}")
+async def update_watchlist(list_id: str, data: CreateWatchlist):
+    try:
+        # Fetch existing list to get current arrays
+        existing = supabase.table("Watchlist").select("*").eq("id", list_id).execute()
+        if not existing.data:
+            raise HTTPException(status_code=404, detail="Lista não encontrada")
+        
+        current_list = existing.data[0]
+        
+        # Current arrays (handle None)
+        current_movies = current_list.get('id_film') or []
+        current_series = current_list.get('id_serie') or []
+        current_tv = current_list.get('id_tv') or []
+        current_anime = current_list.get('id_anime') or []
+
+        # New items to add
+        new_movies = []
+        new_series = []
+        new_tv = []
+        new_anime = []
+
+        for item in data.items:
+            media_id = item.get('id')
+            media_type = item.get('type')
+            
+            if media_type == 'movie':
+                if media_id not in current_movies:
+                    new_movies.append(media_id)
+            elif media_type == 'tv':
+                if media_id not in current_tv:
+                    new_tv.append(media_id)
+            elif media_type == 'anime':
+                if media_id not in current_anime:
+                    new_anime.append(media_id)
+            elif media_type == 'series':
+                if media_id not in current_series:
+                    new_series.append(media_id)
+
+        # Merge
+        updated_movies = current_movies + new_movies
+        updated_series = current_series + new_series
+        updated_tv = current_tv + new_tv
+        updated_anime = current_anime + new_anime
+
+        # Update payload
+        payload = {
+            "id_film": updated_movies if updated_movies else None,
+            "id_serie": updated_series if updated_series else None,
+            "id_tv": updated_tv if updated_tv else None,
+            "id_anime": updated_anime if updated_anime else None
+        }
+
+        response = supabase.table("Watchlist").update(payload).eq("id", list_id).execute()
+        return {"message": "Lista atualizada com sucesso!", "data": response.data}
+
+    except Exception as e:
+        print(f"Error updating watchlist: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.delete("/watchlist/{list_id}")
+async def delete_watchlist(list_id: str):
+    try:
+        response = supabase.table("Watchlist").delete().eq("id", list_id).execute()
+        return {"message": "Lista deletada com sucesso!"}
+    except Exception as e:
+        print(f"Error deleting watchlist: {e}")
+        raise HTTPException(status_code=400, detail=str(e))

@@ -27,7 +27,8 @@ export default function MediaGrid({ data, isLoading, title, ListHeaderComponent,
 
     // Calculate dynamic columns
     const availableWidth = width - (CONTAINER_PADDING * 2);
-    const numColumns = Math.floor(availableWidth / (MIN_CARD_WIDTH + (ITEM_MARGIN * 2)));
+    // Revert to standard dynamic columns (approx 2 on mobile)
+    const numColumns = Math.floor(availableWidth / MIN_CARD_WIDTH);
     const finalColumns = Math.max(2, numColumns);
     const cardWidth = (availableWidth - (ITEM_MARGIN * 2 * finalColumns)) / finalColumns;
 

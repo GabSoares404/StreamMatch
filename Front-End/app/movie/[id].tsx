@@ -1,7 +1,7 @@
 import { useLocalSearchParams, Stack } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, Dimensions, ActivityIndicator } from 'react-native';
-import { fetchGenericDetails, MediaDetail, getSimklIdFromTmdb, fetchDetailsFromTmdb } from '../../services/api';
+import { fetchGenericDetails, MediaDetail, fetchDetailsFromTmdb } from '../../services/api';
 import { useColorScheme } from '../../hooks/use-color-scheme';
 import { Colors } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,14 +21,12 @@ export default function MovieDetails() {
     const loadDetails = async () => {
         setLoading(true);
         let data;
-        if (source === 'tmdb') {
-            const simklId = await getSimklIdFromTmdb(Number(id));
-            if (simklId) {
-                data = await fetchGenericDetails(simklId, 'movie');
-            } else {
-                // Fallback to TMDb-only details
-                data = await fetchDetailsFromTmdb(Number(id), 'movie');
-            }
+
+        const isTmdb = source === 'tmdb' || (Array.isArray(source) && source.includes('tmdb'));
+
+        if (isTmdb) {
+            // Direct fetch from TMDB, skipping unreliable Simkl ID resolution
+            data = await fetchDetailsFromTmdb(Number(id), 'movie');
         } else {
             data = await fetchGenericDetails(Number(id), 'movie');
         }

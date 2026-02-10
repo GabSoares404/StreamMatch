@@ -7,6 +7,7 @@ interface MovieCardProps {
     movie: UnifiedMedia;
     onPress: () => void;
     width: number; // Pass width explicitly for grid support
+    style?: any;
 }
 
 const IMAGE_ASPECT_RATIO = 1.5; // Standard poster ratio approx
@@ -14,18 +15,16 @@ const IMAGE_ASPECT_RATIO = 1.5; // Standard poster ratio approx
 import { useColorScheme } from '../hooks/use-color-scheme';
 import { Colors } from '../constants/theme';
 
-export default function MovieCard({ movie, onPress, width }: MovieCardProps) {
+export default function MovieCard({ movie, onPress, width, style }: MovieCardProps) {
     const theme = useColorScheme() ?? 'light';
     const [activeIndex, setActiveIndex] = useState(0);
     const scrollRef = useRef<ScrollView>(null);
 
-    const posterUri = movie.poster && movie.poster.toString().startsWith('http')
-        ? movie.poster
-        : `https://simkl.in/posters/${movie.poster}_m.jpg`;
+    const posterUri = movie.poster && movie.poster !== 'null'
+        ? (movie.poster.toString().startsWith('http') ? movie.poster : `https://simkl.in/posters/${movie.poster}_m.jpg`)
+        : null;
 
-    const fanartUri = movie.fanart && movie.fanart.toString().startsWith('http')
-        ? movie.fanart
-        : `https://simkl.in/fanart/${movie.fanart}_medium.jpg`;
+    // ... (fanartUri logic can stay or be similar)
 
     const images = { uri: posterUri, type: 'Poster' };
 
@@ -35,39 +34,47 @@ export default function MovieCard({ movie, onPress, width }: MovieCardProps) {
         const roundIndex = Math.round(index);
         setActiveIndex(roundIndex);
     };
-''
+
     return (
         <View style={[
             styles.card,
-            { width, backgroundColor: theme === 'dark' ? '#1E1E1E' : '#FFF' }
+            { width, backgroundColor: theme === 'dark' ? '#1E1E1E' : '#FFF' },
+            style
         ]}>
             <TouchableOpacity onPress={onPress} activeOpacity={0.9} style={styles.touchableArea}>
                 <View style={styles.imageWrapper}>
-                    <ScrollView
-                        ref={scrollRef}
-                        horizontal
-                        pagingEnabled
-                        showsHorizontalScrollIndicator={false}
-                        onScroll={handleScroll}
-                        scrollEventThrottle={16}
-                        style={{ width: width, height: width * IMAGE_ASPECT_RATIO }}
-                    >
-
-                    <Image
-                        source={{ uri: images.uri }}
-                        style={{ width: width, height: width * IMAGE_ASPECT_RATIO, backgroundColor: '#333' }}
-                        resizeMode="cover"
-                    />
-                    
-                    </ScrollView>
+                    {posterUri ? (
+                        <ScrollView
+                            ref={scrollRef}
+                            horizontal
+                            pagingEnabled
+                            showsHorizontalScrollIndicator={false}
+                            onScroll={handleScroll}
+                            scrollEventThrottle={16}
+                            style={{ width: width, height: width * IMAGE_ASPECT_RATIO }}
+                        >
+                            <Image
+                                source={{ uri: posterUri }}
+                                style={{ width: width, height: width * IMAGE_ASPECT_RATIO, backgroundColor: '#333' }}
+                                resizeMode="cover"
+                            />
+                        </ScrollView>
+                    ) : (
+                        <View style={{ width: width, height: width * IMAGE_ASPECT_RATIO, backgroundColor: '#333', justifyContent: 'center', alignItems: 'center', padding: 8 }}>
+                            <Ionicons name="image-outline" size={32} color={Colors[theme].icon} style={{ marginBottom: 8 }} />
+                            <Text style={{ color: Colors[theme].text, textAlign: 'center', fontSize: 12 }} numberOfLines={3}>
+                                {movie.title}
+                            </Text>
+                        </View>
+                    )}
 
                     {/* Rating Badge Overlay */}
-                    <View style={styles.ratingBadgeOverlay}>
-                        <Text style={styles.ratingText}>{movie.rating?.toFixed(1)}</Text>
-                    </View>
+                    {!!movie.rating && (
+                        <View style={styles.ratingBadgeOverlay}>
+                            <Text style={styles.ratingText}>{movie.rating?.toFixed(1)}</Text>
+                        </View>
+                    )}
                 </View>
-
-                {/* Info block removed */}
             </TouchableOpacity>
         </View>
     );

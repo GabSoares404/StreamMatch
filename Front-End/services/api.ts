@@ -250,7 +250,7 @@ export const fetchTMDBDetails = async (tmdbId: number, type: 'movie' | 'tv') => 
     }
 };
 
-export const fetchDetailsFromTmdb = async (tmdbId: number, type: 'movie' | 'tv' | 'anime'): Promise<MediaDetail | null> => {
+export const fetchDetailsFromTmdb = async (tmdbId: number, type: 'movie' | 'tv', originalType?: 'movie' | 'tv' | 'anime'): Promise<MediaDetail | null> => {
     // Fallback: Construct MediaDetail purely from TMDb
     // Anime is treated as TV in TMDb usually
     const tmdbType = type === 'movie' ? 'movie' : 'tv';
@@ -269,7 +269,8 @@ export const fetchDetailsFromTmdb = async (tmdbId: number, type: 'movie' | 'tv' 
         fanart: fanart,
         year: tmdbData.release_date?.substring(0, 4) || tmdbData.first_air_date?.substring(0, 4),
         rating: tmdbData.vote_average,
-        type: type,
+        type: originalType || type, // Use original type if provided (e.g. 'series' mapped to 'tv')
+        source: 'tmdb', // Explicitly mark as TMDB source
         overview: tmdbData.overview,
         runtime: tmdbData.runtime ? `${tmdbData.runtime}` : undefined,
         country: tmdbData.production_countries?.[0]?.iso_3166_1,
@@ -285,20 +286,6 @@ export const fetchDetailsFromTmdb = async (tmdbId: number, type: 'movie' | 'tv' 
     };
 };
 
-export const getSimklIdFromTmdb = async (tmdbId: number): Promise<number | null> => {
-    try {
-        const response = await fetch(`${API_BASE}/search/id?tmdb=${tmdbId}&client_id=${CLIENT_ID}`);
-        if (!response.ok) return null;
-        const data = await response.json();
-        if (data && data.length > 0 && data[0].ids && data[0].ids.simkl) {
-            return data[0].ids.simkl;
-        }
-        return null;
-    } catch (error) {
-        console.error("Get Simkl ID Error:", error);
-        return null;
-    }
-};
 
 export const fetchGenericDetails = async (id: number, type: 'movie' | 'anime' | 'tv'): Promise<MediaDetail | null> => {
     try {
@@ -314,13 +301,14 @@ export const fetchGenericDetails = async (id: number, type: 'movie' | 'anime' | 
         }
         const simklData = await response.json();
 
+        if (!simklData || !simklData.ids) {
+            console.warn(`Simkl data missing IDs for ${type}/${id}`);
+            return null;
+        }
+
         // 2. Fetch TMDB Data (Localized) if ID exists
         let tmdbData = null;
         if (simklData.ids.tmdb) {
-            // Anime is usually 'tv' in TMDB, but could be 'movie' depending on the item. 
-            // Simkl type 'anime' maps to TMDB 'tv' mostly (exceptions exist for movies).
-            // For safety, we trust the 'type' param unless it's anime, then we guess 'tv' first?
-            // Simkl usually handles mapping. Let's assume 'anime' -> 'tv' for TMDB mostly.
             const tmdbType = type === 'movie' ? 'movie' : 'tv';
             tmdbData = await fetchTMDBDetails(simklData.ids.tmdb, tmdbType);
         }
@@ -328,50 +316,38 @@ export const fetchGenericDetails = async (id: number, type: 'movie' | 'anime' | 
         // 3. Merge Data (Prioritize TMDB for Text/Loc field)
         const country = tmdbData?.production_countries?.[0]?.iso_3166_1 || simklData.country;
         const overview = tmdbData?.overview || simklData.overview;
-        // User requested Original Title (Romanized for Anime)
         let title = tmdbData?.original_title || tmdbData?.original_name || simklData.title;
         if (type === 'anime') {
-            // For Anime, TMDB original_name is often Kanji. Simkl title is usually Romaji/English.
             title = simklData.title;
         }
 
         const poster = tmdbData?.poster_path ? `https://image.tmdb.org/t/p/w500${tmdbData.poster_path}` : simklData.poster;
         const fanart = tmdbData?.backdrop_path ? `https://image.tmdb.org/t/p/w1280${tmdbData.backdrop_path}` : simklData.fanart;
 
-        // Extract BR Providers (Flatrate only)
         const providers = tmdbData?.['watch/providers']?.results?.BR?.flatrate?.map((p: any) => ({
             provider_id: p.provider_id,
             provider_name: p.provider_name,
             logo_path: `https://image.tmdb.org/t/p/w200${p.logo_path}`
         })) || [];
 
-        // Note: Existing app expects 'poster' to be just the hash for Simkl.
-        // We need to return a property that the UI can handle. 
-        // The UI currently does: `https://simkl.in/posters/${media.poster}_m.jpg`
-        // We should PROBABLY keep providing the Simkl poster hash to avoid breaking the UI, 
-        // OR update the UI to handle full URLs.
-        // Let's stick to returning Simkl images for now to avoid breaking the image component 
-        // unless we update the UI component too.
-        // BUT user specifically asked for "Country" and better data. 
-        // Let's UPDATE the Country and text fields first.
-
         return {
             id: simklData.ids.simkl,
             title: title,
-            poster: simklData.poster, // Keep Simkl poster hash for now to ensure compatibility
-            fanart: simklData.fanart, // Keep Simkl fanart hash for now
+            poster: poster,
+            fanart: simklData.fanart,
             year: simklData.year,
             rating: simklData.ratings?.simkl?.rating,
             type: type,
             overview: overview,
-            runtime: simklData.runtime, // Simkl runtime is often in generic format
-            country: country, // This is now localized from TMDB!
+            runtime: simklData.runtime,
+            country: country,
             status: simklData.status,
             genres: simklData.genres,
             ratings: simklData.ratings,
             ids: simklData.ids,
             tmdbRating: tmdbData?.vote_average,
-            providers: providers
+            providers: providers,
+            source: 'simkl'
         };
     } catch (error) {
         console.error(`Fetch Generic Details Error (${type}/${id}):`, error);
@@ -380,3 +356,22 @@ export const fetchGenericDetails = async (id: number, type: 'movie' | 'anime' | 
 };
 
 
+
+export const fetchListMediaDetails = async (id: number | string, type: string): Promise<MediaDetail | null> => {
+    try {
+        if (type === 'anime') {
+            // Anime uses Simkl IDs
+            return await fetchGenericDetails(Number(id), 'anime');
+        } else {
+            // Movies, TV, Series use TMDB IDs
+            // Ensure type is 'movie' or 'tv' for TMDB
+            let tmdbType: 'movie' | 'tv' = 'movie';
+            if (type === 'tv' || type === 'series') tmdbType = 'tv';
+
+            return await fetchDetailsFromTmdb(Number(id), tmdbType, type as any);
+        }
+    } catch (error) {
+        console.error(`Error fetching list media details for ${type}/${id}:`, error);
+        return null;
+    }
+};
