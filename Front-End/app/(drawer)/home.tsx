@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { ScrollView, StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useMovieStore } from '../../store/useMovieStore';
 import TrendingSlider from '../../components/TrendingSlider';
@@ -10,6 +11,8 @@ export default function Home() {
     const { movies, series, tv, anime, isLoading, fetchAllTrending } = useMovieStore();
     const theme = useColorScheme() ?? 'light';
 
+    const router = useRouter();
+
     useEffect(() => {
         fetchAllTrending();
     }, []);
@@ -19,14 +22,20 @@ export default function Home() {
             <View style={styles.contentContainer}>
                 <View style={[styles.createListContainer, { borderColor: Colors[theme].icon }]}>
                     <View style={styles.actionButtonContainer}>
-                        <TouchableOpacity style={[styles.createListButton, { backgroundColor: Colors[theme].tint }]}>
+                        <TouchableOpacity
+                            style={[styles.createListButton, { backgroundColor: Colors[theme].tint }]}
+                            onPress={() => router.push('/create-list')}
+                        >
                             <Ionicons name="add" size={32} color={Colors[theme].background} />
                         </TouchableOpacity>
                         <Text style={[styles.buttonText, { color: Colors[theme].text }]}>Criar Lista</Text>
                     </View>
 
                     <View style={styles.actionButtonContainer}>
-                        <TouchableOpacity style={[styles.createListButton, { backgroundColor: Colors[theme].tint }]}>
+                        <TouchableOpacity
+                            style={[styles.createListButton, { backgroundColor: Colors[theme].tint }]}
+                            onPress={() => router.push('/view-lists')}
+                        >
                             <Ionicons name="list" size={32} color={Colors[theme].background} />
                         </TouchableOpacity>
                         <Text style={[styles.buttonText, { color: Colors[theme].text }]}>Ver Listas</Text>
