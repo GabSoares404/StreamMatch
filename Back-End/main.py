@@ -219,6 +219,19 @@ async def update_watchlist(list_id: str, data: CreateWatchlist):
         print(f"Error updating watchlist: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
+@app.patch("/watchlist/{list_id}")
+async def rename_watchlist(list_id: str, data: dict):
+    try:
+        new_name = data.get("nome_list")
+        if not new_name:
+            raise HTTPException(status_code=400, detail="Nome da lista é obrigatório")
+
+        response = supabase.table("Watchlist").update({"nome_list": new_name}).eq("id", list_id).execute()
+        return {"message": "Nome atualizado com sucesso!", "data": response.data}
+    except Exception as e:
+        print(f"Error renaming watchlist: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
 @app.delete("/watchlist/{list_id}")
 async def delete_watchlist(list_id: str):
     try:
