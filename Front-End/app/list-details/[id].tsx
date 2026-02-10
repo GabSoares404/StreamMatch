@@ -262,7 +262,7 @@ export default function ListDetailsScreen() {
                     behavior={Platform.OS === "ios" ? "padding" : "height"}
                     style={styles.centeredView}
                 >
-                    <View style={[styles.modalView, { backgroundColor: '#252525' }]}>
+                    <View style={[styles.modalView, { backgroundColor: theme === 'light' ? '#fff' : '#252525' }]}>
                         <Text style={[styles.modalText, { color: Colors[theme].text }]}>Alterar nome da lista</Text>
                         <TextInput
                             style={[styles.modalInput, { color: Colors[theme].text, borderColor: Colors[theme].icon }]}

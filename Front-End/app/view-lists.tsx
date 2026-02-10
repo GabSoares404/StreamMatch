@@ -72,7 +72,7 @@ export default function ViewListsScreen() {
 
     const renderListCard = ({ item }: { item: FormattedList }) => (
         <TouchableOpacity
-            style={[styles.card, { backgroundColor: '#1A1A1A' }]}
+            style={[styles.card, { backgroundColor: theme === 'light' ? '#fff' : '#1A1A1A' }]}
             onPress={() => router.push({ pathname: '/list-details/[id]', params: { id: item.id } })}
         >
             <View style={styles.cardHeader}>
