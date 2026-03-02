@@ -43,7 +43,7 @@ export default function ListDetailsScreen() {
 
         try {
             // 1. Fetch the list metadata
-            const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.1.1.4:8000';
+            const API_URL = process.env.EXPO_PUBLIC_API_URL;
             const response = await fetch(`${API_URL}/watchlist/${user.id}`);
             if (!response.ok) throw new Error('Failed to fetch lists');
 
@@ -104,7 +104,7 @@ export default function ListDetailsScreen() {
         }
 
         try {
-            const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.1.1.4:8000';
+            const API_URL = process.env.EXPO_PUBLIC_API_URL;
             const response = await fetch(`${API_URL}/watchlist/${id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
@@ -144,7 +144,7 @@ export default function ListDetailsScreen() {
                     style: "destructive",
                     onPress: async () => {
                         try {
-                            const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.1.1.4:8000';
+                            const API_URL = process.env.EXPO_PUBLIC_API_URL;
                             const response = await fetch(`${API_URL}/watchlist/${id}`, {
                                 method: 'DELETE',
                             });

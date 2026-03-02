@@ -55,7 +55,7 @@ export default function AddToListScreen() {
         if (!listId) return;
 
         try {
-            const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.1.1.4:8000';
+            const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
             // Construct payload matching backend expectation for update
             // Note: Reuse CreateWatchlist structure for simplicity if backend allows, or match logic

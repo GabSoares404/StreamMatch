@@ -32,7 +32,7 @@ export default function ViewListsScreen() {
             return;
         }
         try {
-            const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.1.1.4:8000';
+            const API_URL = process.env.EXPO_PUBLIC_API_URL;
             const response = await fetch(`${API_URL}/watchlist/${user.id}`);
             if (response.ok) {
                 const data = await response.json();

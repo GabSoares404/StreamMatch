@@ -78,7 +78,7 @@ export default function CreateListScreen() {
             // **Correction**: In Expo, localhost often fails on physical devices.
             // I will use process.env.EXPO_PUBLIC_API_URL if it exists, otherwise localhost.
 
-            const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.1.1.4:8000';
+            const API_URL = process.env.EXPO_PUBLIC_API_URL;
             console.log("DEBUG: Sending request to:", `${API_URL}/watchlist`);
 
             const payload = {
