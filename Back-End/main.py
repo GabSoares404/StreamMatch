@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from pydantic import BaseModel
 from supabase import create_client, Client
 from dotenv import load_dotenv
@@ -99,6 +99,25 @@ async def login(credentials: UserCredentials):
 @app.get("/")
 def read_root():
     return {"message": "StreamMatch Backend is running"}
+
+@app.post("/keepalive")
+def keepalive(x_ping_token: str = Header(None)):
+    PING_TOKEN = os.environ.get("PING_TOKEN")
+    if not PING_TOKEN or x_ping_token != PING_TOKEN:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    try:
+        # operação simples só pra "acordar" o banco
+        response = supabase.table("Users").select("*").limit(1).execute()
+
+        return {
+            "status": "ok",
+            "message": "Supabase ativo",
+            "data_count": len(response.data)
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # --- Watchlist Feature ---
 

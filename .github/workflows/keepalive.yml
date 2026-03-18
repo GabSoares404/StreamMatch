@@ -1,0 +1,20 @@
+name: Keep Backend and Supabase Alive
+
+on:
+  schedule:
+    # Roda a cada 4 dias ("0 0 */4 * *")
+    # Para testar imediatamente no Github, você pode usar (descomentar no Github):
+    # - cron: '*/5 * * * *'  (pra rodar a cada 5 min em testes, depois volte pra 4 dias)
+    - cron: '0 0 */4 * *'
+  # Permite rodar manualmente clicando no botão no GitHub Actions
+  workflow_dispatch: 
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chamando a rota /keepalive
+        # Substitua URL_DO_SEU_BACKEND_AQUI pela link real do seu back-end no Render
+        run: |
+          curl -X POST ${{ secrets.BACKEND_URL }}/keepalive \
+          -H "x-ping-token: ${{ secrets.PING_TOKEN }}"
